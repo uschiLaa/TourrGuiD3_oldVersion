@@ -35,17 +35,11 @@ shinyUI(fluidPage(
                       "Stringy",
                       "Monotonic"), selected = "Outlying")),
       radioButtons(
-        "density",
-        label = "Density Plots",
-        choices = c("On", "Off"),
-        selected = "Off"
+        "rescale",
+        label = "Data rescaling",
+        choices = c("None", "[0,1]"),
+        selected = "None"
       ),
- #     radioButtons(
-#        "dataset",
-#        label ="Select Example Dataset",
-#        choices = c("Gaussian", "Geozoo", "Cognostics"),
-#        selected = "Geozoo"
-#      ),
 
 fileInput("file1", "Choose CSV File",
           accept = c(

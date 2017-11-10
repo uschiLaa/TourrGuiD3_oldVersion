@@ -22,18 +22,6 @@ shinyServer(function(input, output, session) {
   
   observeEvent(input$speed, rv$aps <- input$speed)
   
-  observeEvent(input$density, {
-    
-    dens = 1
-    
-    if (input$density == "Off") {
-      dens = 0
-    }
-
-    session$sendCustomMessage("density", toJSON(dens))
-    
-  })
-  
   observeEvent(input$file1, {
     inFile <- input$file1
     if (is.null(inFile))
@@ -59,13 +47,15 @@ shinyServer(function(input, output, session) {
   observeEvent(input$numCmax,{updateSliderInput(session, "cMax", value = input$numCmax)})
   
   
-  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax),
+  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale),
                {
 
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type))
                  if (length(input$variables) == 0) {
-                   #rv$mat <- rescale(as.matrix(rv$d[names(rv$d[nums])[1:3]]))
-                   rv$mat <- as.matrix(rv$d[names(rv$d[nums])[1:3]])
+                   if(input$rescale=="[0,1]"){
+                     rv$mat <- rescale(as.matrix(rv$d[names(rv$d[nums])[1:3]]))}
+                   else{
+                     rv$mat <- as.matrix(rv$d[names(rv$d[nums])[1:3]])}
                    rv$class <- unname(rv$d[names(rv$d)[1]])
                    if (is.numeric(rv$class[,1])){
                      output$numC <- reactive(TRUE)
@@ -87,8 +77,10 @@ shinyServer(function(input, output, session) {
                    rv$pLabel <- unname(rv$d[names(rv$d)[1]])
                  } else {
                    
-                   #rv$mat <- rescale(as.matrix(rv$d[input$variables]))
-                   rv$mat <- as.matrix(rv$d[input$variables])
+                   if(input$rescale=="[0,1]"){
+                     rv$mat <- rescale(as.matrix(rv$d[input$variables]))}
+                   else{
+                     rv$mat <- as.matrix(rv$d[input$variables])}
                    if (rv$nums[input$class]){
                      output$numC <- reactive(TRUE)
                      minC <- min(rv$d[input$class])
@@ -110,9 +102,6 @@ shinyServer(function(input, output, session) {
                    outputOptions(output, "numC", suspendWhenHidden = FALSE) 
                    rv$pLabel <- unname(rv$d[input$point_label])
                  }
-
-    
-                 #cl <- c(rv$class[[1]])
 
                  session$sendCustomMessage("newcolours", unique(cl))
                  

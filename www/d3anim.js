@@ -61,12 +61,6 @@ Shiny.addCustomMessageHandler("info",
   }
 )
 
-Shiny.addCustomMessageHandler("density",
-  function(message) {
-    density = Number(message[0]);
-    // document.getElementById('info_2').innerHTML = density;
-  }
-)
 
 Shiny.addCustomMessageHandler("debug",
   function (message){
@@ -117,35 +111,35 @@ function(message) {
 }
 )
 
-Shiny.addCustomMessageHandler("contour",
-  function(message) {
-    
-    document.getElementById('d3_output').innerHTML = message
-    
-    svg.insert("g", "g").append("svg")
-    .attr("width", w)
-    .attr("height", h)
-    .selectAll("path")
-      .data(message.map(function(d) {
-        return d3.range(message.x.length).map(function(i) {
-          return {x: d.x[i], y: d.y[i]};
-        });
-      }))
-    .enter().append("svg:path")
-      .attr("d", line)
-      .on("mouseover", function(d, i) {
-        d3.select(this).style("stroke", "yellow");
-      })
-      .on("mouseout", function(d, i) {
-        d3.select(this).style("stroke", "darkgreen");
-      })
-      .style("fill", "none")
-      .style("stroke", "darkgreen")
-      .style("stroke-width", 0)
-      .transition()
-      .style("stroke-width", 2);
-  }
-)
+//Shiny.addCustomMessageHandler("contour",
+//  function(message) {
+//    
+//    document.getElementById('d3_output').innerHTML = message
+//    
+//    svg.insert("g", "g").append("svg")
+//    .attr("width", w)
+//    .attr("height", h)
+//    .selectAll("path")
+//      .data(message.map(function(d) {
+//        return d3.range(message.x.length).map(function(i) {
+//          return {x: d.x[i], y: d.y[i]};
+//        });
+//      }))
+//    .enter().append("svg:path")
+//      .attr("d", line)
+//      .on("mouseover", function(d, i) {
+//        d3.select(this).style("stroke", "yellow");
+//      })
+//      .on("mouseout", function(d, i) {
+//        d3.select(this).style("stroke", "darkgreen");
+//      })
+//      .style("fill", "none")
+//      .style("stroke", "darkgreen")
+//      .style("stroke-width", 0)
+//      .transition()
+//      .style("stroke-width", 2);
+//  }
+//)
 
 Shiny.addCustomMessageHandler("data",
     function(message) {
@@ -156,22 +150,22 @@ Shiny.addCustomMessageHandler("data",
         
         svg.select(".loading").remove();
         
-        draw_contourplot = function(message) {
-          svg.insert("g", "g")
-      .attr("fill", "none")
-      .attr("stroke", "blue")
-      .attr("stroke-linejoin", "round")
-      .selectAll("path")
-      .data(d3.contourDensity()
-        .x(function(d) { return x(d.x); })
-        .y(function(d) { return y(d.y); })
-        .size([w, h])
-        .bandwidth(40)
-      (message))
-    .enter().append("path")
-      .attr("d", d3.geoPath())
-      .transition();
-        }
+//        draw_contourplot = function(message) {
+//          svg.insert("g", "g")
+//      .attr("fill", "none")
+//      .attr("stroke", "blue")
+//      .attr("stroke-linejoin", "round")
+//      .selectAll("path")
+//      .data(d3.contourDensity()
+//        .x(function(d) { return x(d.x); })
+//        .y(function(d) { return y(d.y); })
+//        .size([w, h])
+//        .bandwidth(40)
+//      (message))
+//    .enter().append("path")
+//      .attr("d", d3.geoPath())
+//      .transition();
+//        }
 
         draw_scatterplot = function(message) {
           svg.selectAll("circle")
