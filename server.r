@@ -6,7 +6,7 @@ shinyServer(function(input, output, session) {
   f <- grand_tour()
   rv <- reactiveValues()
   
-  rv$d <- read.csv("geozoo.csv", stringsAsFactors = FALSE)
+  rv$d <- read.csv("/Users/ulaa0001/bAnomalies/dataAndSampled.csv", stringsAsFactors = FALSE)
   
 
   observeEvent(input$restart_random,
@@ -25,7 +25,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$file1, {
     inFile <- input$file1
     if (is.null(inFile))
-    {rv$d <- read.csv("geozoo.csv", stringsAsFactors = FALSE)}
+    {rv$d <- read.csv("/Users/ulaa0001/bAnomalies/dataAndSampled.csv", stringsAsFactors = FALSE)}
     else{rv$d <- read.csv(inFile$datapath, stringsAsFactors = FALSE)}
         
     rv$nums <- sapply(rv$d, is.numeric)
@@ -53,10 +53,16 @@ shinyServer(function(input, output, session) {
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type))
                  if (length(input$variables) == 0) {
                    if(input$rescale=="[0,1]"){
-                     rv$mat <- rescale(as.matrix(rv$d[names(rv$d[nums])[1:3]]))}
+                     rv$mat <- rescale(as.matrix(filter(rv$d,cat=="data")[names(rv$d[nums])[1:3]]))
+                     rv$p68 <- rescale(as.matrix(filter(rv$d,cat=="sampled",pValue==68)[names(rv$d[nums])[1:3]]))
+                     rv$p95 <- rescale(as.matrix(filter(rv$d,cat=="sampled",pValue==95 | pValue==90)[names(rv$d[nums])[1:3]]))
+                     }
                    else{
-                     rv$mat <- as.matrix(rv$d[names(rv$d[nums])[1:3]])}
-                   rv$class <- unname(rv$d[names(rv$d)[1]])
+                     rv$mat <- as.matrix(filter(rv$d,cat=="data")[names(rv$d[nums])[1:3]])
+                     rv$p68 <- as.matrix(filter(rv$d,cat=="sampled",pValue==68)[names(rv$d[nums])[1:3]])
+                     rv$p95 <- as.matrix(filter(rv$d,cat=="sampled",pValue==95 | pValue==90)[names(rv$d[nums])[1:3]])
+                     }
+                   rv$class <- unname(filter(rv$d,cat=="data")[names(rv$d)[1]])
                    if (is.numeric(rv$class[,1])){
                      output$numC <- reactive(TRUE)
                      minC <- min(rv$d[names(rv$d)[1]])
@@ -64,23 +70,29 @@ shinyServer(function(input, output, session) {
                      if((input$cMax >= minC) & (input$cMax <= maxC) ){medC <- input$cMax}
                      else{medC <- median(rv$d[names(rv$d)[1]][,1])}
                      stepC <- (max(rv$d[names(rv$d)[1]]) - min(rv$d[names(rv$d)[1]])) / 100
-                     rv$class <- unname(ifelse(rv$d[names(rv$d)[1]] > input$cMax, "Larger", "Smaller"))
+                     rv$class <- unname(ifelse(filter(rv$d,cat=="data")[names(rv$d)[1]] > input$cMax, "Larger", "Smaller"))
                      cl <- rv$class[,1]
                      updateSliderInput(session, "cMax", min=minC, max=maxC, value=medC, step=stepC)
                      updateNumericInput(session, "numCmax", value = medC)
                    }
                    else{
-                     rv$class <- unname(rv$d[input$class])
+                     rv$class <- unname(filter(rv$d,cat=="data")[input$class])
                      output$numC <- reactive(FALSE)
                      cl <- rv$class[[1]]
                    }
-                   rv$pLabel <- unname(rv$d[names(rv$d)[1]])
+                   rv$pLabel <- unname(filter(rv$d,cat=="data")[names(rv$d)[1]])
                  } else {
                    
                    if(input$rescale=="[0,1]"){
-                     rv$mat <- rescale(as.matrix(rv$d[input$variables]))}
+                     rv$mat <- rescale(as.matrix(filter(rv$d,cat=="data")[input$variables]))
+                     rv$p68 <- rescale(as.matrix(filter(rv$d,cat=="sampled",pValue==68)[input$variables]))
+                     rv$p95 <- rescale(as.matrix(filter(rv$d,cat=="sampled",pValue==95 | pValue==90)[input$variables]))
+                     }
                    else{
-                     rv$mat <- as.matrix(rv$d[input$variables])}
+                     rv$mat <- as.matrix(filter(rv$d,cat=="data")[input$variables])
+                     rv$p68 <- as.matrix(filter(rv$d,cat=="sampled",pValue==68)[input$variables])
+                     rv$p95 <- as.matrix(filter(rv$d,cat=="sampled",pValue==95 | pValue==90)[input$variables])
+                   }
                    if (rv$nums[input$class]){
                      output$numC <- reactive(TRUE)
                      minC <- min(rv$d[input$class])
@@ -88,22 +100,24 @@ shinyServer(function(input, output, session) {
                      if((input$cMax >= minC) & (input$cMax <= maxC) ){medC <- input$cMax}
                      else{medC <- median(rv$d[input$class][,1])}
                      stepC <- (max(rv$d[input$class]) - min(rv$d[input$class])) / 100
-                     rv$class <- unname(ifelse(rv$d[input$class] > input$cMax, "Larger", "Smaller"))
+                     rv$class <- unname(ifelse(filter(rv$d,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
                      cl <- rv$class[,1]
                      updateSliderInput(session, "cMax", min=minC, max=maxC, value=medC, step=stepC)
                      updateNumericInput(session, "numCmax", value = medC)
                        
                      }
                    else{
-                     rv$class <- unname(rv$d[input$class])
+                     rv$class <- unname(filter(rv$d,cat=="data")[input$class])
                      output$numC <- reactive(FALSE)
                      cl <- rv$class[[1]]
                    }
                    outputOptions(output, "numC", suspendWhenHidden = FALSE) 
-                   rv$pLabel <- unname(rv$d[input$point_label])
+                   rv$pLabel <- unname(filter(rv$d,cat=="data")[input$point_label])
                  }
+                 
+                 myColV <- c("p68", "p95", unique(cl))
 
-                 session$sendCustomMessage("newcolours", unique(cl))
+                 session$sendCustomMessage("newcolours", myColV)
                  
                  rv$tour <-
                    new_tour(as.matrix(rv$d[input$variables]),
@@ -179,9 +193,16 @@ shinyServer(function(input, output, session) {
       j <- cbind(j, class = rv$class)
       colnames(j) <- NULL
       
+      j68 <- center(rv$p68 %*% step$proj)
+      colnames(j68) <- NULL
+      
+      j95 <- center(rv$p95 %*% step$proj)
+      colnames(j95) <- NULL
+      
       
       session$sendCustomMessage(type = "data", message = list(d = toJSON(data_frame(pL=rv$pLabel[,1],x=j[,2],y=j[,1],c=j[,3])),
-                                                              a = toJSON(data_frame(n=input$variables,y=step$proj[,1],x=step$proj[,2]))))
+                                                              a = toJSON(data_frame(n=input$variables,y=step$proj[,1],x=step$proj[,2])),
+                                                              p68= toJSON(j68), p95= toJSON(j95)))
     }
     
       else{

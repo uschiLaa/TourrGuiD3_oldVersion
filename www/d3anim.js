@@ -111,80 +111,60 @@ function(message) {
 }
 )
 
-//Shiny.addCustomMessageHandler("contour",
-//  function(message) {
-//    
-//    document.getElementById('d3_output').innerHTML = message
-//    
-//    svg.insert("g", "g").append("svg")
-//    .attr("width", w)
-//    .attr("height", h)
-//    .selectAll("path")
-//      .data(message.map(function(d) {
-//        return d3.range(message.x.length).map(function(i) {
-//          return {x: d.x[i], y: d.y[i]};
-//        });
-//      }))
-//    .enter().append("svg:path")
-//      .attr("d", line)
-//      .on("mouseover", function(d, i) {
-//        d3.select(this).style("stroke", "yellow");
-//      })
-//      .on("mouseout", function(d, i) {
-//        d3.select(this).style("stroke", "darkgreen");
-//      })
-//      .style("fill", "none")
-//      .style("stroke", "darkgreen")
-//      .style("stroke-width", 0)
-//      .transition()
-//      .style("stroke-width", 2);
-//  }
-//)
 
 Shiny.addCustomMessageHandler("data",
     function(message) {
         
-        //Shiny.addCustomMessageHandler("countour")
-        
-        // document.getElementById('d3_output').innerHTML = message;
+
         
         svg.select(".loading").remove();
         
-//        draw_contourplot = function(message) {
-//          svg.insert("g", "g")
-//      .attr("fill", "none")
-//      .attr("stroke", "blue")
-//      .attr("stroke-linejoin", "round")
-//      .selectAll("path")
-//      .data(d3.contourDensity()
-//        .x(function(d) { return x(d.x); })
-//        .y(function(d) { return y(d.y); })
-//        .size([w, h])
-//        .bandwidth(40)
-//      (message))
-//    .enter().append("path")
-//      .attr("d", d3.geoPath())
-//      .transition();
-//        }
 
         draw_scatterplot = function(message) {
-          svg.selectAll("circle")
-            .data(message.d)
-            .enter()
-            .append("circle")
-            .attr("class", "circle")
-            .attr("cx", function(d) {
-                return x(d.x);
+            
+        svg.selectAll(".circle1")
+          .data(message.p68)
+          .enter()
+          .append("circle")
+          .attr("class", "circle1")
+          .attr("cx", function(d) {
+                return x(d[1]);
             })
-            .attr("cy", function(d) {
-                return y(d.y);
+           .attr("cy", function(d) {
+               return y(d[0]);
             })
+          .attr("r", 4)
+          .attr("fill", colourmap["p68"])
+          .attr('fill-opacity', 0.5)
+          
+          svg.selectAll(".circle2")
+          .data(message.p95)
+          .enter()
+          .append("circle")
+          .attr("class", "circle2")
+          .attr("cx", function(d) {
+                return x(d[1]);
+            })
+           .attr("cy", function(d) {
+               return y(d[0]);
+            })
+          .attr("r", 4)
+          .attr("fill", colourmap["p95"])
+          .attr('fill-opacity', 0.5)
+          
+          
+        svg.selectAll("path")
+             .data(message.d)
+             .enter().append("path")
+             .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; })
+             .attr("d", d3.svg.symbol().type("cross").size(5*5))
             .attr("r", 2)
             .attr("fill", function(d) {
               return colourmap[d.c]
             })
             .append("svg:title")
             .text(function(d) {return d.pL})
+          
             
         svg.selectAll(".line")
         .data(message.a)
@@ -220,6 +200,7 @@ Shiny.addCustomMessageHandler("data",
 
           svg.selectAll("path").remove();
           svg.selectAll("circle").remove();
+          svg.selectAll(".point").remove();
           svg.selectAll("line").remove();
           svg.selectAll(".text1").remove();
           draw_scatterplot(message);
