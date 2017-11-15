@@ -57,6 +57,7 @@ fileInput("file1", "Choose CSV File",
         step = 0.1
       ) ,
       actionButton("restart_random", "Restart tour with random basis"),
+      checkboxInput("showCube", "Show 1 sigma cube", value = FALSE),
       selectInput("point_label",choices = vector('character'), label = "Select labeling variable"),
       selectInput("class", choices = vector('character'), label = "Select class variable to colour the points"),
       conditionalPanel( condition = "output.numC",

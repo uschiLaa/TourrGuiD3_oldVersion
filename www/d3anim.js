@@ -8,7 +8,7 @@ var w = 500,
     fps,
     palette,
     colourmap = {},
-    density = 1;
+    showCube = 0;
     
     
     // colorbrewer scales @ https://bl.ocks.org/mbostock/5577023
@@ -112,6 +112,12 @@ function(message) {
 )
 
 
+Shiny.addCustomMessageHandler("cube",
+  function(message) {
+    showCube = Number(message[0]);
+  }
+)
+
 Shiny.addCustomMessageHandler("data",
     function(message) {
         
@@ -121,7 +127,7 @@ Shiny.addCustomMessageHandler("data",
         
 
         draw_scatterplot = function(message) {
-            
+          
         svg.selectAll(".circle1")
           .data(message.p68)
           .enter()
@@ -166,10 +172,11 @@ Shiny.addCustomMessageHandler("data",
             .text(function(d) {return d.pL})
           
             
-        svg.selectAll(".line")
+        svg.selectAll(".line1")
         .data(message.a)
         .enter()
         .append("line")
+        .attr("class","line1")
         .attr("x1",xCenter)
         .attr("y1",yCenter)
         .attr("x2",function(d) {return x(d.x)})
@@ -184,9 +191,27 @@ Shiny.addCustomMessageHandler("data",
         .attr("x", function(d) {return x(d.x)})
         .attr("y", function(d) {return y(d.y)})
         .text(function(d) {return d.n})
+        }
+        
+        draw_cube = function(message) {
+           document.getElementById('d3_output').innerHTML = message.cubeA;
+
+            svg.selectAll(".line2")
+            .data(message.cube)
+            .enter()
+            .append("line")
+            .attr("class","line2")
+            .attr("x1", function(d) {return x(d.ax)})
+            .attr("y1", function(d) {return y(d.ay)})
+            .attr("x2",function(d) {return x(d.bx)})
+            .attr("y2", function(d) {return y(d.by)})
+            .attr("stroke-width", 2)
+            .attr("stroke","grey")
+            .attr("opacity",0.5);
+            }
+        
         
             
-        }
         
         
         
@@ -201,15 +226,12 @@ Shiny.addCustomMessageHandler("data",
           svg.selectAll("path").remove();
           svg.selectAll("circle").remove();
           svg.selectAll(".point").remove();
-          svg.selectAll("line").remove();
+          svg.selectAll(".line1").remove();
           svg.selectAll(".text1").remove();
+          svg.selectAll(".line2").remove();
           draw_scatterplot(message);
+          if (showCube == 1){draw_cube(message);}
           
-          if (density == 1) {
-            draw_contourplot(message.d);  
-          } else {
-            svg.selectAll("path").remove();
-          }
         }
 
         initialised = 1;
