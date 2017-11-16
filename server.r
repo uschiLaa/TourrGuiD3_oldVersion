@@ -101,7 +101,7 @@ shinyServer(function(input, output, session) {
                    
                    #this vector contains the labels passed to d3, shown on mouse over
                    rv$pLabel <- unname(filter(rv$d,cat=="data")[input$point_label])
-                 
+          
                  # the classes I need to select colors for
                  #FIXME this should be more dynamical, what are the shells I want to show?
                  myColV <- c("p68", "p95", unique(cl))
@@ -111,63 +111,9 @@ shinyServer(function(input, output, session) {
                  
                  # now we can initialise the tour
                  rv$tour <-
-                   new_tour(as.matrix(rv$d[input$variables]),
-                            choose_tour(input$type, input$guidedIndex, cl, input$scagType),
+                   new_tour(rv$mat,choose_tour(input$type, input$guidedIndex, cl, input$scagType),
                             NULL)
                }, ignoreInit = TRUE)
-  
-  
-  #FIXME can i put these functions in a separate file?
-  holes_ <- function() {
-    function(mat) {
-      n <- nrow(mat)
-      d <- ncol(mat)
-      
-      num <- 1 - 1/n * sum(exp(-0.5 * rowSums(mat ^ 2)))
-      den <- 1 - exp(-d / 2)
-      
-      val <- num / den
-      return(val)
-    }
-  }
-  
-  scags <- function(cl,scagMetricIndex) {
-    
-    l <- length(unique(cl))
-
-    if (l != 2)
-    {
-      stop("Scagnostics indices require two groups.")
-    }
-    
-    
-    function(mat) {
-      mat_ <- cbind.data.frame(mat, class = cl)
-      
-      
-      scagResults = c(scagnostics(subset(mat_, class == unique(cl)[1])[1:2])[scagMetricIndex],
-                      scagnostics(subset(mat_, class == unique(cl)[2])[1:2])[scagMetricIndex]
-        
-      )
-      
-      
-      return(abs(scagResults[1] - scagResults[2]))
-      
-    }
-  }
-  
-  cmass_ <- function() {
-    function(mat) {
-      n <- nrow(mat)
-      d <- ncol(mat)
-      
-      num <- 1 - 1/n * sum(exp(-0.5 * rowSums(mat ^ 2)))
-      den <- 1 - exp(-d / 2)
-      
-      val <- num / den
-      return(1 - val)
-    }
-  }
   
   
   # main function for displaying the tour steps
@@ -175,10 +121,7 @@ shinyServer(function(input, output, session) {
 
     if(is.null(rv$d) || is.null(rv$tour)){return()} #nothing to observe before input file is selected and tour initialised
     
-    tour <- rv$tour
-    aps <- rv$aps
-    
-    step <- tour(aps / fps)
+    step <- rv$tour(rv$aps / fps)
     
     if (!is.null(step)) {
       invalidateLater(1000 / fps) #selecting frequency of re-executing this observe function
@@ -222,46 +165,5 @@ shinyServer(function(input, output, session) {
       }
     }
   })
-  
-  
-  
-  choose_tour <- function(type,
-                          subtype = "",
-                          group_variable = "",
-                          scagTypeIndex
-  )
-
-  {
-
-    
-    if (type == "Grand")
-    {
-      tourType <- grand_tour()
-    }
-    else if (input$type == "Little") {
-      tourType <- little_tour()
-      
-    } else
-     
-    {
-      if (subtype == "Holes") {
-        #browser()
-        tourType <- guided_tour(holes_())
-      } else if (subtype == "Centre Mass") {
-        #browser()
-        tourType <- guided_tour(cmass_())
-      }
-      else if (subtype == "LDA") {
-        tourType <- guided_tour(lda_pp(group_variable))
-      } else if (subtype == "PDA") {
-        tourType <- guided_tour(pda_pp(group_variable))
-      } else {
-        tourType <- guided_tour(scags(group_variable, scagTypeIndex))
-      }
-      
-    }
-    
-    return(tourType)
-  }
   
 })

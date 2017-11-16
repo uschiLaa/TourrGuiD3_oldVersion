@@ -6,3 +6,4 @@ library(tourr)
 library(jsonlite)
 library(scagnostics)
 
+source("helpers.r",local = TRUE)
