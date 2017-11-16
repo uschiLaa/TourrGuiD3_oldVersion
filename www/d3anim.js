@@ -128,6 +128,21 @@ Shiny.addCustomMessageHandler("data",
 
         draw_scatterplot = function(message) {
           
+          svg.selectAll(".circle2")
+          .data(message.p95)
+          .enter()
+          .append("circle")
+          .attr("class", "circle2")
+          .attr("cx", function(d) {
+                return x(d[1]);
+            })
+           .attr("cy", function(d) {
+               return y(d[0]);
+            })
+          .attr("r", 4)
+          .attr("fill", colourmap["p95"])
+          .attr('fill-opacity', 0.5)
+
         svg.selectAll(".circle1")
           .data(message.p68)
           .enter()
@@ -143,20 +158,6 @@ Shiny.addCustomMessageHandler("data",
           .attr("fill", colourmap["p68"])
           .attr('fill-opacity', 0.5)
           
-          svg.selectAll(".circle2")
-          .data(message.p95)
-          .enter()
-          .append("circle")
-          .attr("class", "circle2")
-          .attr("cx", function(d) {
-                return x(d[1]);
-            })
-           .attr("cy", function(d) {
-               return y(d[0]);
-            })
-          .attr("r", 4)
-          .attr("fill", colourmap["p95"])
-          .attr('fill-opacity', 0.5)
           
           
         svg.selectAll("path")

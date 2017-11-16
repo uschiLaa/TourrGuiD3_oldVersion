@@ -4,6 +4,8 @@ shinyUI(fluidPage(
   includeScript(path = "js-checkbox.js"),
   titlePanel("Welcome to the TourR Shiny app powered by D3.js"),
   fluidRow(
+ 
+       #first select tour type
     column(3,
       radioButtons(
         "type",
@@ -11,6 +13,8 @@ shinyUI(fluidPage(
         choices = c("Guided", "Little", "Grand"),
         selected = "Grand"
       ),
+ 
+          #for guided tour select also index function 
       conditionalPanel(
         "input.type == 'Guided'",
         selectInput(
@@ -21,6 +25,8 @@ shinyUI(fluidPage(
           selected = "LDA"
         )
       ),
+ 
+         #if scagnostics selected as index fuction, select which scagnostics index to use
       conditionalPanel(
         "input.guidedIndex == 'Scagnostics'",
         selectInput("scagType", "Scagnostics Metric",
@@ -34,6 +40,8 @@ shinyUI(fluidPage(
                       "Skinny",
                       "Stringy",
                       "Monotonic"), selected = "Outlying")),
+
+          #by default do not rescale data, but dynamically can select rescaling to [0,1] interval
       radioButtons(
         "rescale",
         label = "Data rescaling",
@@ -41,13 +49,15 @@ shinyUI(fluidPage(
         selected = "None"
       ),
 
-fileInput("file1", "Choose CSV File",
+      #input file upload
+      fileInput("file1", "Choose CSV File",
           accept = c(
             "text/csv",
             "text/comma-separated-values,text/plain",
             ".csv")
-),
+      ),
 
+      #tour speed selection to modify step size
       sliderInput(
         "speed",
         label =  "Tour speed",
@@ -56,15 +66,30 @@ fileInput("file1", "Choose CSV File",
         value = 1,
         step = 0.1
       ) ,
+      
+      
       actionButton("restart_random", "Restart tour with random basis"),
+      
+      #FIXME use input file to select length of cube edges?
       checkboxInput("showCube", "Show 1 sigma cube", value = FALSE),
+      
+      # labels for point identification from the plotted image
       selectInput("point_label",choices = vector('character'), label = "Select labeling variable"),
+      
+      # class can be either numerical or categorical variable
       selectInput("class", choices = vector('character'), label = "Select class variable to colour the points"),
+      
+      # if class is numerical we group the points by selecting a threshold value that can be selected from a slider
       conditionalPanel( condition = "output.numC",
                         sliderInput("cMax",label = "Threshold value", min=0, max =1, value= 0.5, step = 0.1)),
+
+      # add also numeric input of threshold value for selection of exact value, this will update also the slider
       conditionalPanel(condition = "output.numC", numericInput("numCmax", label = "Select exact threshold value", value=0.5))
       ),
-    column(3,
+ 
+       column(3,
+              
+      # the variables used in the tour can be selected from all numeric input columns
       checkboxGroupInput(
         "variables",
         label = "Choose variables for the 2D tour",
@@ -72,6 +97,10 @@ fileInput("file1", "Choose CSV File",
         selected = vector('character')
       )
     ),
+    
+    # draw d3 output here
+    # FIXME how to get dynamically updated size of the plot?
+    # FIXME understqand what all the div/script calls are doing...
     column(6,
       tags$div(tags$p(" "),
                ggvisOutput("ggvis")),

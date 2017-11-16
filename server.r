@@ -6,7 +6,6 @@ shinyServer(function(input, output, session) {
   f <- grand_tour()
   rv <- reactiveValues()
   
-  rv$d <- read.csv("/Users/ulaa0001/bAnomalies/dataAndSampled.csv", stringsAsFactors = FALSE)
   
 
   observeEvent(input$restart_random,
@@ -24,10 +23,8 @@ shinyServer(function(input, output, session) {
   
   observeEvent(input$file1, {
     inFile <- input$file1
-    if (is.null(inFile))
-    {rv$d <- read.csv("/Users/ulaa0001/bAnomalies/dataAndSampled.csv", stringsAsFactors = FALSE)}
-    else{rv$d <- read.csv(inFile$datapath, stringsAsFactors = FALSE)}
-        
+    rv$d <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
+           
     rv$nums <- sapply(rv$d, is.numeric)
     rv$groups <- sapply(rv$d, is.character)
     
@@ -38,7 +35,7 @@ shinyServer(function(input, output, session) {
     )
 
     updateSelectInput(session, "class", choices = names(rv$d))
-    updateSelectizeInput(session, "class", selected = names(rv$d[groups])[1])
+    updateSelectizeInput(session, "class", selected = names(rv$d[rv$groups])[1])
     updateSelectInput(session, "point_label", choices = names(rv$d), selected = names(rv$d)[1])
     
     
@@ -68,7 +65,7 @@ shinyServer(function(input, output, session) {
                  if (length(input$variables) == 0) {
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[names(rv$d[nums])[1:3]])
                      rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[names(rv$d[nums])[1:3]])
-                     rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95 | pValue==90)[names(rv$d[nums])[1:3]])
+                     rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[names(rv$d[nums])[1:3]])
                    rv$class <- unname(filter(rv$d,cat=="data")[names(rv$d)[1]])
                    if (is.numeric(rv$class[,1])){
                      output$numC <- reactive(TRUE)
@@ -92,7 +89,7 @@ shinyServer(function(input, output, session) {
                    
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
                      rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
-                     rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95 | pValue==90)[input$variables])
+                     rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[input$variables])
                    if (rv$nums[input$class]){
                      output$numC <- reactive(TRUE)
                      minC <- min(rv$d[input$class])
@@ -124,7 +121,7 @@ shinyServer(function(input, output, session) {
                    new_tour(as.matrix(rv$d[input$variables]),
                             choose_tour(input$type, input$guidedIndex, cl, input$scagType),
                             NULL)
-               })
+               }, ignoreInit = TRUE)
   
   
   holes_ <- function() {
@@ -182,6 +179,8 @@ shinyServer(function(input, output, session) {
   
   observe({
 
+    if(is.null(rv$d) || is.null(rv$tour)){return()}
+    
     tour <- rv$tour
     aps <- rv$aps
     
