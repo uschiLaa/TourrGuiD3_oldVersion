@@ -48,16 +48,10 @@ shinyServer(function(input, output, session) {
   # if showCube is selected, we read cube parameters and activate drawing option here
   # FIXME replace this by dynamically drawing cube according to number of input parameters and point positions read from some input file
   observeEvent(c(input$showCube,input$rescale,input$variables),{
-#    if(input$showCube & length(input$variables==6)){
-#        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeA",pValue==68)[input$variables])
-#        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeB",pValue==68)[input$variables])
-#        showCube = 1
-#    }
     if (input$showCube){
       rv$d <- filter(rv$d, !(cat %in% c("cubeLow","cubeUp")))
       nCube <- cube.iterate(length(input$variables))
       cubeSides <- read_csv("1sigmaCube.csv")
-      print(input$variables)
       cubeSidesLow <- filter(cubeSides, lower==1)[input$variables]
       cubeSidesUp <- filter(cubeSides, lower==0)[input$variables]
       cubeSideLength <- cubeSidesUp - cubeSidesLow
@@ -66,14 +60,11 @@ shinyServer(function(input, output, session) {
       i <- nrow(rv$d) +1
       for(edgeLow in nCube$edges[,1]){
         rv$d[i,][input$variables] <- cubePoints[edgeLow,]
-        vNotUsed <- names(rv$d[rv$nums])[which(!names(rv$d[rv$nums]) %in% input$variables)]
-        rv$d[i,][vNotUsed] <- 0
         rv$d[i,]["cat"] = "cubeLow"
         i <- i+1
       }
       for(edgeUp in nCube$edges[,2]){
-        rv$d[i,][1:length(input$variables)] <- cubePoints[edgeUp,]
-        rv$d[i,][vNotUsed] <- 0
+        rv$d[i,][input$variables] <- cubePoints[edgeUp,]
         rv$d[i,]["cat"] = "cubeUp"
         i <- i+1
       }
@@ -89,7 +80,7 @@ shinyServer(function(input, output, session) {
   
   # need to reset tour when one of these input parameters is changed
   # FIXME need function that simply redraws last picture but with updated parameters, e.g. adding/removing cube, point labels
-  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale),
+  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale, input$showCube),
                {
 
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type)) #FIXME what should be messages shown here?
@@ -99,7 +90,7 @@ shinyServer(function(input, output, session) {
                    scaleCols["chi2"] = FALSE
                    scaleCols["pValue"] = FALSE
                    rv$dScaled[scaleCols] <- rescale(rv$dScaled[scaleCols])
-                     }
+                 }
                    #use rescaled data to extract matrices based on requested input variables
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
                      rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
