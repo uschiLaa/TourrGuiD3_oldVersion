@@ -15,10 +15,10 @@ shinyServer(function(input, output, session) {
                 rv$tour <- new_tour(as.matrix(rv$d[input$variables]),
                                   choose_tour(input$type, input$guidedIndex, c(rv$class[[1]]), input$scagType),
                                  b)
-               })
+               },priority = 3)
   
   #update step size (i.e. aps) given new ui input
-  observeEvent(input$speed, rv$aps <- input$speed)
+  observeEvent(input$speed, rv$aps <- input$speed, priority = 4)
 
   #initiallize ui once input file has been selected  
   observeEvent(input$file1, {
@@ -37,24 +37,54 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, "class", choices = names(rv$d))
     updateSelectizeInput(session, "class", selected = names(rv$d[rv$groups])[1])
     updateSelectInput(session, "point_label", choices = names(rv$d), selected = names(rv$d)[1])
+    rv$showCube <- 0
     
     
-  })
+  },priority = 7)
   
   # update slider input if numerical value is chosen for the grouping threshold
-  observeEvent(input$numCmax,{updateSliderInput(session, "cMax", value = input$numCmax)})
+  observeEvent(input$numCmax,{updateSliderInput(session, "cMax", value = input$numCmax)},priority = 6)
 
   # if showCube is selected, we read cube parameters and activate drawing option here
   # FIXME replace this by dynamically drawing cube according to number of input parameters and point positions read from some input file
-  observeEvent(c(input$showCube,input$rescale),{
-    if(input$showCube & length(input$variables==6)){
-        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeA",pValue==68)[input$variables])
-        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeB",pValue==68)[input$variables])
-        showCube = 1
+  observeEvent(c(input$showCube,input$rescale,input$variables),{
+#    if(input$showCube & length(input$variables==6)){
+#        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeA",pValue==68)[input$variables])
+#        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeB",pValue==68)[input$variables])
+#        showCube = 1
+#    }
+    if (input$showCube){
+      rv$d <- filter(rv$d, !(cat %in% c("cubeLow","cubeUp")))
+      nCube <- cube.iterate(length(input$variables))
+      cubeSides <- read_csv("1sigmaCube.csv")
+      print(input$variables)
+      cubeSidesLow <- filter(cubeSides, lower==1)[input$variables]
+      cubeSidesUp <- filter(cubeSides, lower==0)[input$variables]
+      cubeSideLength <- cubeSidesUp - cubeSidesLow
+      cubePoints <- nCube$points %*% diag(cubeSideLength)
+      cubePoints <- sweep(cubePoints,2,as.matrix(cubeSidesLow),"+",check.margin = FALSE)
+      i <- nrow(rv$d) +1
+      for(edgeLow in nCube$edges[,1]){
+        rv$d[i,][input$variables] <- cubePoints[edgeLow,]
+        vNotUsed <- names(rv$d[rv$nums])[which(!names(rv$d[rv$nums]) %in% input$variables)]
+        rv$d[i,][vNotUsed] <- 0
+        rv$d[i,]["cat"] = "cubeLow"
+        i <- i+1
+      }
+      for(edgeUp in nCube$edges[,2]){
+        rv$d[i,][1:length(input$variables)] <- cubePoints[edgeUp,]
+        rv$d[i,][vNotUsed] <- 0
+        rv$d[i,]["cat"] = "cubeUp"
+        i <- i+1
+      }
+      rv$showCube = 1
     }
-    else{showCube = 0} #turn off cube drawing when un-selecting the option in the ui
-    session$sendCustomMessage("cube", toJSON(showCube))
-  }
+    else{
+      rv$d <- filter(rv$d, !(cat %in% c("cubeLow","cubeUp")))
+      rv$showCube = 0
+      } #turn off cube drawing when un-selecting the option in the ui
+    session$sendCustomMessage("cube", toJSON(rv$showCube))
+  },ignoreInit = TRUE, priority = 5
   )
   
   # need to reset tour when one of these input parameters is changed
@@ -74,6 +104,10 @@ shinyServer(function(input, output, session) {
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
                      rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
                      rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[input$variables])
+                     if(rv$showCube==1){
+                       rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeLow")[input$variables])
+                       rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeUp")[input$variables])
+                     }
                   # if grouping according to numerical variable requested, set up slider and numeric input window based on minimum and maximum value in data
                    if (rv$nums[input$class]){
                      output$numC <- reactive(TRUE)
@@ -113,7 +147,7 @@ shinyServer(function(input, output, session) {
                  rv$tour <-
                    new_tour(rv$mat,choose_tour(input$type, input$guidedIndex, cl, input$scagType),
                             NULL)
-               }, ignoreInit = TRUE)
+               }, ignoreInit = TRUE, priority = 2)
   
   
   # main function for displaying the tour steps
@@ -164,6 +198,6 @@ shinyServer(function(input, output, session) {
         session$sendCustomMessage(type = "debug", message = "Guided tour finished: no better bases found.")
       }
     }
-  })
+  }, priority = 1)
   
 })

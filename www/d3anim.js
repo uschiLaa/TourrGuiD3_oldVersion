@@ -195,7 +195,7 @@ Shiny.addCustomMessageHandler("data",
         }
         
         draw_cube = function(message) {
-           document.getElementById('d3_output').innerHTML = message.cubeA;
+           //document.getElementById('d3_output').innerHTML = message.cubeA;
 
             svg.selectAll(".line2")
             .data(message.cube)
