@@ -24,6 +24,10 @@ shinyServer(function(input, output, session) {
   observeEvent(input$file1, {
     inFile <- input$file1
     rv$d <- read.csv(inFile$datapath, stringsAsFactors = FALSE)
+    if(!("cat" %in% colnames(rv$d))){
+      rv$d <- add_column(rv$d, cat="data")
+    }
+    
            
     rv$nums <- sapply(rv$d, is.numeric)
     rv$groups <- sapply(rv$d, is.character)
@@ -35,11 +39,10 @@ shinyServer(function(input, output, session) {
     )
     updateCheckboxGroupInput(
       session, "metadata",
-      choices = unique(filter(rv$d,cat!="data")$cat)
-    )
+      choices = unique(filter(rv$d,cat!="data")$cat))
 
-    updateSelectInput(session, "class", choices = names(rv$d))
-    updateSelectizeInput(session, "class", selected = names(rv$d[rv$groups])[1])
+    updateSelectInput(session, "class", choices = names(rv$d)[names(rv$d) != "cat"])
+    updateSelectizeInput(session, "class", selected = names(rv$d[names(rv$d) != "cat"])[-1])
     updateSelectInput(session, "point_label", choices = names(rv$d), selected = names(rv$d)[1])
     rv$showCube <- 0
     
