@@ -95,6 +95,12 @@ shinyUI(fluidPage(
         label = "Choose variables for the 2D tour",
         choices = vector('character'),
         selected = vector('character')
+      ),
+      checkboxGroupInput(
+        "metadata",
+        label = "Choose which metadata should be shown",
+        choices = vector('character'),
+        selected = vector('character')
       )
     ),
     

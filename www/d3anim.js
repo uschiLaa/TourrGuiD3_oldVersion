@@ -8,6 +8,7 @@ var w = 500,
     fps,
     palette,
     colourmap = {},
+    showMeta = 0,
     showCube = 0;
     
     
@@ -118,6 +119,12 @@ Shiny.addCustomMessageHandler("cube",
   }
 )
 
+Shiny.addCustomMessageHandler("metadata",
+  function(message) {
+    showMeta = Number(message[0]);
+  }
+)
+
 Shiny.addCustomMessageHandler("data",
     function(message) {
         
@@ -125,40 +132,28 @@ Shiny.addCustomMessageHandler("data",
         
         svg.select(".loading").remove();
         
+        draw_metadata = function(message) {
+        
+          svg.selectAll("circle")
+          .data(message.m)
+          .enter()
+          .append("circle")
+          .attr("class", "circle")
+          .attr("cx", function(d) {
+                return x(d.x);
+            })
+           .attr("cy", function(d) {
+               return y(d.y);
+            })
+          .attr("r", 4)
+          .style('fill-opacity', 0.5)
+          .style("fill", function(d) {
+              return colourmap[d.c];})
+}
+        
 
         draw_scatterplot = function(message) {
-          
-          svg.selectAll(".circle2")
-          .data(message.p95)
-          .enter()
-          .append("circle")
-          .attr("class", "circle2")
-          .attr("cx", function(d) {
-                return x(d[1]);
-            })
-           .attr("cy", function(d) {
-               return y(d[0]);
-            })
-          .attr("r", 4)
-          .attr("fill", colourmap["p95"])
-          .attr('fill-opacity', 0.5)
-
-        svg.selectAll(".circle1")
-          .data(message.p68)
-          .enter()
-          .append("circle")
-          .attr("class", "circle1")
-          .attr("cx", function(d) {
-                return x(d[1]);
-            })
-           .attr("cy", function(d) {
-               return y(d[0]);
-            })
-          .attr("r", 4)
-          .attr("fill", colourmap["p68"])
-          .attr('fill-opacity', 0.5)
-          
-          
+        
           
         svg.selectAll("path")
              .data(message.d)
@@ -230,6 +225,7 @@ Shiny.addCustomMessageHandler("data",
           svg.selectAll(".line1").remove();
           svg.selectAll(".text1").remove();
           svg.selectAll(".line2").remove();
+          if (showMeta == 1) {draw_metadata(message);}
           draw_scatterplot(message);
           if (showCube == 1){draw_cube(message);}
           

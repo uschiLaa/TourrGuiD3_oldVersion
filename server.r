@@ -33,6 +33,10 @@ shinyServer(function(input, output, session) {
       choices = names(rv$d[rv$nums]),
       selected = names(rv$d[rv$nums])[1:3]
     )
+    updateCheckboxGroupInput(
+      session, "metadata",
+      choices = unique(filter(rv$d,cat!="data")$cat)
+    )
 
     updateSelectInput(session, "class", choices = names(rv$d))
     updateSelectizeInput(session, "class", selected = names(rv$d[rv$groups])[1])
@@ -46,7 +50,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$numCmax,{updateSliderInput(session, "cMax", value = input$numCmax)},priority = 6)
 
   # if showCube is selected, we read cube parameters and activate drawing option here
-  # FIXME replace this by dynamically drawing cube according to number of input parameters and point positions read from some input file
+  # FIXME allow selection of input file for drawing cube?
   observeEvent(c(input$showCube,input$rescale,input$variables),{
     if (input$showCube){
       rv$d <- filter(rv$d, !(cat %in% c("cubeLow","cubeUp")))
@@ -78,9 +82,15 @@ shinyServer(function(input, output, session) {
   },ignoreInit = TRUE, priority = 5
   )
   
+  observeEvent(input$metadata,{
+    if(is.null(input$metadata)){rv$showMeta = 0}
+    else{rv$showMeta = 1}
+    session$sendCustomMessage("metadata",toJSON(rv$showMeta))
+    },ignoreInit = TRUE, priority = 5, ignoreNULL = FALSE)
+  
   # need to reset tour when one of these input parameters is changed
   # FIXME need function that simply redraws last picture but with updated parameters, e.g. adding/removing cube, point labels
-  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale, input$showCube),
+  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale, input$showCube, input$metadata),
                {
 
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type)) #FIXME what should be messages shown here?
@@ -93,8 +103,9 @@ shinyServer(function(input, output, session) {
                  }
                    #use rescaled data to extract matrices based on requested input variables
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
-                     rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
-                     rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[input$variables])
+                     #rv$metadata <- as.matrix(filter(rv$dScaled, cat %in% input$metadata)[input$variables])
+                     #rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
+                     #rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[input$variables])
                      if(rv$showCube==1){
                        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeLow")[input$variables])
                        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeUp")[input$variables])
@@ -102,8 +113,8 @@ shinyServer(function(input, output, session) {
                   # if grouping according to numerical variable requested, set up slider and numeric input window based on minimum and maximum value in data
                    if (rv$nums[input$class]){
                      output$numC <- reactive(TRUE)
-                     minC <- min(rv$d[input$class])
-                     maxC <- max(rv$d[input$class])
+                     minC <- min(rv$d[input$class],na.rm = TRUE)
+                     maxC <- max(rv$d[input$class], na.rm = TRUE)
                      #if selected value is between minimum and maximum value we use it
                      if((input$cMax >= minC) & (input$cMax <= maxC) ){medC <- input$cMax}
                      #otherwise reset to median value
@@ -129,7 +140,13 @@ shinyServer(function(input, output, session) {
           
                  # the classes I need to select colors for
                  #FIXME this should be more dynamical, what are the shells I want to show?
-                 myColV <- c("p68", "p95", unique(cl))
+                 myColV <- unique(cl)
+                 if(!(is.null(input$metadata))){
+                   rv$metadata <- as.matrix(filter(rv$dScaled, cat %in% input$metadata)[input$variables])
+                   rv$meta <- unname(filter(rv$d, cat %in% input$metadata)["cat"])
+                   clMeta <- rv$meta[[1]]
+                   myColV <- c(unique(clMeta), unique(cl))
+                 }
 
                  # pass requested color assignment to d3
                  session$sendCustomMessage("newcolours", myColV)
@@ -155,12 +172,22 @@ shinyServer(function(input, output, session) {
       j <- center(rv$mat %*% step$proj)
       j <- cbind(j, class = rv$class)
       colnames(j) <- NULL
-      
-      j68 <- center(rv$p68 %*% step$proj)
-      colnames(j68) <- NULL
-      
-      j95 <- center(rv$p95 %*% step$proj)
-      colnames(j95) <- NULL
+
+      if(!is.null(input$metadata)){
+        jMeta <- center(rv$metadata %*% step$proj)
+        jMeta <- cbind(jMeta, class = rv$meta)
+        colnames(jMeta) <- NULL
+      }
+      else{
+        jMeta <- matrix(c(0,0,0,0,0,0),ncol=3)
+      }
+
+            
+#      j68 <- center(rv$p68 %*% step$proj)
+#      colnames(j68) <- NULL
+#      
+#      j95 <- center(rv$p95 %*% step$proj)
+#      colnames(j95) <- NULL
       
       if(!input$showCube | is.null(rv$a)){
         cubeA <- matrix(c(0,0,0,0),ncol=2)
@@ -177,7 +204,7 @@ shinyServer(function(input, output, session) {
       
       session$sendCustomMessage(type = "data", message = list(d = toJSON(data_frame(pL=rv$pLabel[,1],x=j[,2],y=j[,1],c=j[,3])),
                                                               a = toJSON(data_frame(n=input$variables,y=step$proj[,1],x=step$proj[,2])),
-                                                              p68= toJSON(j68), p95= toJSON(j95),
+                                                              m = toJSON(data_frame(x=jMeta[,2],y=jMeta[,1],c=jMeta[,3])),
                                                               cube = toJSON(data_frame(ax = cubeA[,2], ay = cubeA[,1], bx=cubeB[,2],by=cubeB[,1]))))
     }
     
