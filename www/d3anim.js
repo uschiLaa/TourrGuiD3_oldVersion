@@ -27,6 +27,21 @@ var svg = d3.select("#d3_output_2")
 var x = d3.scale.linear().domain([-1, 1]).range([left_pad, w - pad]),
     y = d3.scale.linear().domain([-1, 1]).range([pad, h - pad * 2]);
     
+d3.select(window).on('resize', resize); 
+
+function resize() {
+    // update width
+    width = parseInt(d3.select('#d3_output_2').style('width'), 10);
+    height = parseInt(d3.select('#d3_output_2').style('height'), 10);
+    
+    svg.attr("width", width).attr("height", height);
+    
+    // reset x range
+    x.range([left_pad, width - pad]);
+    y.range([pad,height - pad * 2]);
+
+    // do the actual resize...
+}
 //var xCenter = (w - left_pad)/2;
 //var yCenter = ((h-pad*2) - pad)/2;
 

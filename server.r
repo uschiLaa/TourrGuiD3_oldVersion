@@ -113,12 +113,16 @@ shinyServer(function(input, output, session) {
 
                    updateSliderInput(session, "cMax", min=minC, max=maxC, value=medC, step=stepC)
                    updateNumericInput(session, "numCmax", value = medC)
+                   
+                   #range should be between minimum and maximum value
                    c1 <- max(input$cutData[1],minC) %>% min(maxC)
                    c2 <- min(input$cutData[2],maxC) %>% max(minC)
+                   #if zero width range, reset to include full range
                    if(c2==c1){
                      c1 <- minC
                      c2 <- maxC
                    }
+                   
                    updateSliderInput(session, "cutData", min=minC, max=maxC, value=c(c1,c2), step=stepC)
                    rv$dSelected <- filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)"))
                    
