@@ -6,13 +6,14 @@ shinyServer(function(input, output, session) {
   
   
   #if restart_random button selected, re-initialise with randomly selected projection
+  #FIXME should take into account subsetting done (i.e. selecting data only...)
   observeEvent(input$restart_random,
               {
                 
                 p <- length(input$variables)
                 b <- matrix(runif(2*p), p, 2) # select projection matrix entries from uniform distribution
                
-                rv$tour <- new_tour(as.matrix(rv$d[input$variables]),
+                rv$tour <- new_tour(as.matrix(rv$dSelected[input$variables]),
                                   choose_tour(input$type, input$guidedIndex, c(rv$class[[1]]), input$scagType),
                                  b)
                },priority = 3)
@@ -64,7 +65,7 @@ shinyServer(function(input, output, session) {
       cubeSideLength <- cubeSidesUp - cubeSidesLow
       cubePoints <- nCube$points %*% diag(cubeSideLength)
       cubePoints <- sweep(cubePoints,2,as.matrix(cubeSidesLow),"+",check.margin = FALSE)
-      i <- nrow(rv$d) +1
+      i <- nrow(rv$d) + 1
       for(edgeLow in nCube$edges[,1]){
         rv$d[i,][input$variables] <- cubePoints[edgeLow,]
         rv$d[i,]["cat"] = "cubeLow"
@@ -93,53 +94,63 @@ shinyServer(function(input, output, session) {
   
   # need to reset tour when one of these input parameters is changed
   # FIXME need function that simply redraws last picture but with updated parameters, e.g. adding/removing cube, point labels
-  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$rescale, input$showCube, input$metadata),
+  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$cutData, input$rescale, input$showCube, input$metadata),
                {
 
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type)) #FIXME what should be messages shown here?
-                 rv$dScaled <- rv$d # we introduce a scaled version of the input data, rescale numerical columns, with exception of chi2 and pValue
+                 
+                 # first setup all necessary ui items
+                 # if grouping according to numerical variable requested, set up slider and numeric input window based on minimum and maximum value in data
+                 if (rv$nums[input$class]){
+                   output$numC <- reactive(TRUE)
+                   minC <- min(rv$d[input$class],na.rm = TRUE)
+                   maxC <- max(rv$d[input$class], na.rm = TRUE)
+                   #if selected value is between minimum and maximum value we use it
+                   if((input$cMax >= minC) & (input$cMax <= maxC) ){medC <- input$cMax}
+                   #otherwise reset to median value
+                   else{medC <- median(rv$d[input$class][,1])}
+                   stepC <- (max(rv$d[input$class]) - min(rv$d[input$class])) / 100
+
+                   updateSliderInput(session, "cMax", min=minC, max=maxC, value=medC, step=stepC)
+                   updateNumericInput(session, "numCmax", value = medC)
+                   c1 <- max(input$cutData[1],minC) %>% min(maxC)
+                   c2 <- min(input$cutData[2],maxC) %>% max(minC)
+                   if(c2==c1){
+                     c1 <- minC
+                     c2 <- maxC
+                   }
+                   updateSliderInput(session, "cutData", min=minC, max=maxC, value=c(c1,c2), step=stepC)
+                   rv$dSelected <- filter_(rv$d, paste(input$class, ">= c1 &", input$class,"<= c2 | is.na(",input$class,")"))
+                   
+                   #create vector of Larger and Smaller class assignment
+                   rv$class <- unname(ifelse(filter(rv$dSelected,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
+                   cl <- rv$class[,1]
+                 }
+                 else{
+                   #if class variable is categorigal, simply extract class vector from the data frame
+                   rv$class <- unname(filter(rv$d,cat=="data")[input$class])
+                   output$numC <- reactive(FALSE)
+                   cl <- rv$class[[1]]
+                   rv$dSelected <- rv$d
+                 }
+                 outputOptions(output, "numC", suspendWhenHidden = FALSE)
+                 
+                 rv$dScaled <- rv$dSelected # we introduce a scaled version of the input data, rescale numerical columns, with exception of chi2 and pValue
                  if (input$rescale=="[0,1]"){
                    scaleCols <- rv$nums
                    scaleCols["chi2"] = FALSE
                    scaleCols["pValue"] = FALSE
-                   rv$dScaled[scaleCols] <- rescale(rv$dScaled[scaleCols])
+                   rv$dScaled[scaleCols] <- center(rescale(rv$dScaled[scaleCols]))
                  }
                    #use rescaled data to extract matrices based on requested input variables
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
-                     #rv$metadata <- as.matrix(filter(rv$dScaled, cat %in% input$metadata)[input$variables])
-                     #rv$p68 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==68)[input$variables])
-                     #rv$p95 <- as.matrix(filter(rv$dScaled,cat=="sampled",pValue==95)[input$variables])
                      if(rv$showCube==1){
                        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeLow")[input$variables])
                        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeUp")[input$variables])
                      }
-                  # if grouping according to numerical variable requested, set up slider and numeric input window based on minimum and maximum value in data
-                   if (rv$nums[input$class]){
-                     output$numC <- reactive(TRUE)
-                     minC <- min(rv$d[input$class],na.rm = TRUE)
-                     maxC <- max(rv$d[input$class], na.rm = TRUE)
-                     #if selected value is between minimum and maximum value we use it
-                     if((input$cMax >= minC) & (input$cMax <= maxC) ){medC <- input$cMax}
-                     #otherwise reset to median value
-                     else{medC <- median(rv$d[input$class][,1])}
-                     stepC <- (max(rv$d[input$class]) - min(rv$d[input$class])) / 100
-                     #create vector of Larger and Smaller class assignment
-                     rv$class <- unname(ifelse(filter(rv$d,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
-                     cl <- rv$class[,1]
-                     updateSliderInput(session, "cMax", min=minC, max=maxC, value=medC, step=stepC)
-                     updateNumericInput(session, "numCmax", value = medC)
-                       
-                     }
-                   else{
-                     #if class variable is categorigal, simply extract class vector from the data frame
-                     rv$class <- unname(filter(rv$d,cat=="data")[input$class])
-                     output$numC <- reactive(FALSE)
-                     cl <- rv$class[[1]]
-                   }
-                   outputOptions(output, "numC", suspendWhenHidden = FALSE)
                    
                    #this vector contains the labels passed to d3, shown on mouse over
-                   rv$pLabel <- unname(filter(rv$d,cat=="data")[input$point_label])
+                   rv$pLabel <- unname(filter(rv$dSelected,cat=="data")[input$point_label])
           
                  # the classes I need to select colors for
                  #FIXME this should be more dynamical, what are the shells I want to show?
@@ -172,12 +183,12 @@ shinyServer(function(input, output, session) {
       invalidateLater(1000 / fps) #selecting frequency of re-executing this observe function
       
       #FIXME do i need to call center function? it should be done for everything simultaneously?
-      j <- center(rv$mat %*% step$proj)
+      j <- rv$mat %*% step$proj
       j <- cbind(j, class = rv$class)
       colnames(j) <- NULL
 
       if(!is.null(input$metadata)){
-        jMeta <- center(rv$metadata %*% step$proj)
+        jMeta <- rv$metadata %*% step$proj
         jMeta <- cbind(jMeta, class = rv$meta)
         colnames(jMeta) <- NULL
       }
@@ -185,20 +196,14 @@ shinyServer(function(input, output, session) {
         jMeta <- matrix(c(0,0,0,0,0,0),ncol=3)
       }
 
-            
-#      j68 <- center(rv$p68 %*% step$proj)
-#      colnames(j68) <- NULL
-#      
-#      j95 <- center(rv$p95 %*% step$proj)
-#      colnames(j95) <- NULL
       
       if(!input$showCube | is.null(rv$a)){
         cubeA <- matrix(c(0,0,0,0),ncol=2)
         cubeB <- matrix(c(0,0,0,0),ncol=2)
       }
       else{
-        cubeA <- center(rv$a %*% step$proj)
-        cubeB <- center(rv$b %*% step$proj)
+        cubeA <- rv$a %*% step$proj
+        cubeB <- rv$b %*% step$proj
         colnames(cubeA) <- NULL
         colnames(cubeB) <- NULL
       }

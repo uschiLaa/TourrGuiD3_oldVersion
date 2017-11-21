@@ -27,8 +27,8 @@ var svg = d3.select("#d3_output_2")
 var x = d3.scale.linear().domain([-1, 1]).range([left_pad, w - pad]),
     y = d3.scale.linear().domain([-1, 1]).range([pad, h - pad * 2]);
     
-var xCenter = (w - left_pad)/2;
-var yCenter = ((h-pad*2) - pad)/2;
+//var xCenter = (w - left_pad)/2;
+//var yCenter = ((h-pad*2) - pad)/2;
 
 var xAxis = d3.svg.axis().scale(x).orient("bottom")
     .ticks(10);
@@ -173,8 +173,8 @@ Shiny.addCustomMessageHandler("data",
         .enter()
         .append("line")
         .attr("class","line1")
-        .attr("x1",xCenter)
-        .attr("y1",yCenter)
+        .attr("x1", function() {return x(0)})
+        .attr("y1", function() {return y(0)})
         .attr("x2",function(d) {return x(d.x)})
         .attr("y2", function(d) {return y(d.y)})
         .attr("stroke-width", 2)
