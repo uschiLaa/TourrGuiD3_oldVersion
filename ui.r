@@ -11,7 +11,8 @@ shinyUI(fluidPage(
         "type",
         label = "Select tour type",
         choices = c("Guided", "Little", "Grand"),
-        selected = "Grand"
+        selected = "Grand",
+        inline = TRUE
       ),
  
           #for guided tour select also index function 
@@ -46,7 +47,8 @@ shinyUI(fluidPage(
         "rescale",
         label = "Data rescaling",
         choices = c("None", "[0,1]"),
-        selected = "None"
+        selected = "None",
+        inline = TRUE
       ),
 
       #input file upload
@@ -101,7 +103,7 @@ shinyUI(fluidPage(
       ),
       checkboxGroupInput(
         "metadata",
-        label = "Choose which metadata should be shown",
+        label = "Choose which metadata to show",
         choices = vector('character'),
         selected = vector('character')
       )

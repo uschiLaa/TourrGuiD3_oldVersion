@@ -120,7 +120,7 @@ shinyServer(function(input, output, session) {
                      c2 <- maxC
                    }
                    updateSliderInput(session, "cutData", min=minC, max=maxC, value=c(c1,c2), step=stepC)
-                   rv$dSelected <- filter_(rv$d, paste(input$class, ">= c1 &", input$class,"<= c2 | is.na(",input$class,")"))
+                   rv$dSelected <- filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)"))
                    
                    #create vector of Larger and Smaller class assignment
                    rv$class <- unname(ifelse(filter(rv$dSelected,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
