@@ -60,9 +60,8 @@ shinyServer(function(input, output, session) {
     if (input$showCube){
       rv$d <- filter(rv$d, !(cat %in% c("cubeLow","cubeUp")))
       nCube <- cube.iterate(length(input$variables))
-      cubeSides <- read_csv("1sigmaCube.csv")
-      cubeSidesLow <- filter(cubeSides, lower==1)[input$variables]
-      cubeSidesUp <- filter(cubeSides, lower==0)[input$variables]
+      cubeSidesLow <- apply(filter(rv$d, cat=="data", pValue==68)[input$variables],2,min)
+      cubeSidesUp <- apply(filter(rv$d, cat=="data", pValue==68)[input$variables],2,max)
       cubeSideLength <- cubeSidesUp - cubeSidesLow
       cubePoints <- nCube$points %*% diag(cubeSideLength)
       cubePoints <- sweep(cubePoints,2,as.matrix(cubeSidesLow),"+",check.margin = FALSE)
