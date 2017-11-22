@@ -10,7 +10,7 @@ shinyUI(fluidPage(
       radioButtons(
         "type",
         label = "Select tour type",
-        choices = c("Guided", "Little", "Grand"),
+        choices = c("Guided", "Little", "Grand", "Local"),
         selected = "Grand",
         inline = TRUE
       ),

@@ -1,4 +1,5 @@
 choose_tour <- function(type,
+                        lastProj,
                         subtype = "",
                         group_variable = "",
                         scagTypeIndex
@@ -14,7 +15,12 @@ choose_tour <- function(type,
   else if (type == "Little") {
     tourType <- little_tour()
     
-  } else
+  }
+  else if (type == "Local") {
+    tourType <- local_tour(lastProj)
+  }
+  
+  else
     
   {
     if (subtype == "Holes") {

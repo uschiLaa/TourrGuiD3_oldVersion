@@ -12,9 +12,10 @@ shinyServer(function(input, output, session) {
                 
                 p <- length(input$variables)
                 b <- matrix(runif(2*p), p, 2) # select projection matrix entries from uniform distribution
+                
                
-                rv$tour <- new_tour(as.matrix(rv$dSelected[input$variables]),
-                                  choose_tour(input$type, input$guidedIndex, c(rv$class[[1]]), input$scagType),
+                rv$tour <- new_tour(as.matrix(filter(rv$dSelected,cat=="data")[input$variables]),
+                                  choose_tour(input$type, b, input$guidedIndex, c(rv$class[[1]]), input$scagType),
                                  b)
                },priority = 3)
   
@@ -171,8 +172,10 @@ shinyServer(function(input, output, session) {
                  
                  # now we can initialise the tour
                  rv$tour <-
-                   new_tour(rv$mat,choose_tour(input$type, input$guidedIndex, cl, input$scagType),
+                   new_tour(rv$mat,choose_tour(input$type, rv$currentProj, input$guidedIndex, cl, input$scagType),
                             NULL)
+                 
+                 # make parallel coordinate plot of data points, showing the selected variables and grouping by selected grouping class
                  colSelection <- which( colnames(rv$dSelected) %in% input$variables )
                  output$paraCoords <- renderPlot(ggparcoord(filter(rv$dSelected,cat=="data"),columns=colSelection,groupColumn=input$class),height = 250)
                }, ignoreInit = TRUE, priority = 2)
@@ -184,6 +187,7 @@ shinyServer(function(input, output, session) {
     if(is.null(rv$d) || is.null(rv$tour)){return()} #nothing to observe before input file is selected and tour initialised
     
     step <- rv$tour(rv$aps / fps)
+    rv$currentProj <- step$proj
     
     if (!is.null(step)) {
       invalidateLater(1000 / fps) #selecting frequency of re-executing this observe function
