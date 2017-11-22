@@ -113,6 +113,7 @@ shinyUI(fluidPage(
     # FIXME how to get dynamically updated size of the plot?
     # tags$script calls to include d3 dependencies, tags$div adds d3 output to the page (check if all of them are needed?)
     column(6,
+           fluidRow(column(12,
       tags$div(tags$p(" "),
                ggvisOutput("ggvis")),
       tags$div(tags$p(textOutput("type"))),
@@ -123,6 +124,8 @@ shinyUI(fluidPage(
       tags$div(id = "d3_output_2"),
       tags$div(id = "info"),
       tags$div(id = "info_2"),
-      tags$script(src = "d3anim.js"))
+      tags$script(src = "d3anim.js")),
+      fluidRow(column(12,
+      plotOutput("paraCoords"))))
   )
-))
+)))

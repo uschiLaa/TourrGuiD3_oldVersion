@@ -6,5 +6,6 @@ library(tourr)
 library(jsonlite)
 library(scagnostics)
 library(geozoo)
+library(GGally)
 
 source("helpers.r",local = TRUE)

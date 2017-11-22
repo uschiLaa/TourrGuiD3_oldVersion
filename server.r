@@ -173,6 +173,8 @@ shinyServer(function(input, output, session) {
                  rv$tour <-
                    new_tour(rv$mat,choose_tour(input$type, input$guidedIndex, cl, input$scagType),
                             NULL)
+                 colSelection <- which( colnames(rv$dSelected) %in% input$variables )
+                 output$paraCoords <- renderPlot(ggparcoord(filter(rv$dSelected,cat=="data"),columns=colSelection,groupColumn=input$class),height = 250)
                }, ignoreInit = TRUE, priority = 2)
   
   
