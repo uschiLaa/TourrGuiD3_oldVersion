@@ -15,7 +15,7 @@ shinyServer(function(input, output, session) {
                 
                
                 rv$tour <- new_tour(as.matrix(filter(rv$dSelected,cat=="data")[input$variables]),
-                                  choose_tour(input$type, b, input$guidedIndex, c(rv$class[[1]]), input$scagType),
+                                  choose_tour(input$type, b, input$guidedIndex, c(rv$cl), input$scagType),
                                  b)
                },priority = 3)
   
@@ -128,24 +128,22 @@ shinyServer(function(input, output, session) {
                    
                    #create vector of Larger and Smaller class assignment
                    rv$class <- unname(ifelse(filter(rv$dSelected,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
-                   cl <- rv$class[,1]
+                   rv$cl <- rv$class[,1]
                  }
                  else{
                    #if class variable is categorigal, simply extract class vector from the data frame
                    rv$class <- unname(filter(rv$d,cat=="data")[input$class])
                    output$numC <- reactive(FALSE)
-                   cl <- rv$class[[1]]
+                   rv$cl <- rv$class[[1]]
                    rv$dSelected <- rv$d
                  }
                  outputOptions(output, "numC", suspendWhenHidden = FALSE)
                  
                  rv$dScaled <- rv$dSelected # we introduce a scaled version of the input data, rescale numerical columns, with exception of chi2 and pValue
                  if (input$rescale=="[0,1]"){
-                   scaleCols <- rv$nums
-                   scaleCols["chi2"] = FALSE
-                   scaleCols["pValue"] = FALSE
-                   rv$dScaled[scaleCols] <- center(rescale(rv$dScaled[scaleCols]))
+                   rv$dScaled[rv$nums] <- center(rescale(rv$dScaled[rv$nums]))
                  }
+                 else{rv$dScaled[rv$nums] <- center(rv$dScaled[rv$nums])}
                    #use rescaled data to extract matrices based on requested input variables
                      rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
                      if(rv$showCube==1){
@@ -158,12 +156,12 @@ shinyServer(function(input, output, session) {
           
                  # the classes I need to select colors for
                  #FIXME this should be more dynamical, what are the shells I want to show?
-                 myColV <- unique(cl)
+                 myColV <- unique(rv$cl)
                  if(!(is.null(input$metadata))){
                    rv$metadata <- as.matrix(filter(rv$dScaled, cat %in% input$metadata)[input$variables])
                    rv$meta <- unname(filter(rv$d, cat %in% input$metadata)["cat"])
                    clMeta <- rv$meta[[1]]
-                   myColV <- c(unique(clMeta), unique(cl))
+                   myColV <- c(unique(clMeta), unique(rv$cl))
                  }
 
                  # pass requested color assignment to d3
@@ -171,7 +169,7 @@ shinyServer(function(input, output, session) {
                  
                  # now we can initialise the tour
                  rv$tour <-
-                   new_tour(rv$mat,choose_tour(input$type, rv$currentProj, input$guidedIndex, cl, input$scagType),
+                   new_tour(rv$mat,choose_tour(input$type, rv$currentProj, input$guidedIndex, rv$cl, input$scagType),
                             NULL)
                  
                  # make parallel coordinate plot of data points, showing the selected variables and grouping by selected grouping class
@@ -186,11 +184,10 @@ shinyServer(function(input, output, session) {
     if(is.null(rv$d) || is.null(rv$tour)){return()} #nothing to observe before input file is selected and tour initialised
     
     step <- rv$tour(rv$aps / fps)
-    rv$currentProj <- step$proj
     
     if (!is.null(step)) {
       invalidateLater(1000 / fps) #selecting frequency of re-executing this observe function
-      
+      rv$currentProj <- step$proj
       #FIXME do i need to call center function? it should be done for everything simultaneously?
       j <- rv$mat %*% step$proj
       j <- cbind(j, class = rv$class)
