@@ -9,6 +9,7 @@ var w = 500,
     palette,
     colourmap = {},
     showMeta = 0,
+    colZon =0,
     showCube = 0;
     
     
@@ -18,6 +19,7 @@ var w = 500,
 Shiny.addCustomMessageHandler("parameters", function(message) {aps = Number(message[0]), fps = Number(message[1])});
 
 var duration = 1000 / 1;
+var width = w-pad-left_pad;
 
 var svg = d3.select("#d3_output_2")
     .append("svg")
@@ -27,6 +29,10 @@ var svg = d3.select("#d3_output_2")
 var x = d3.scale.linear().domain([-1, 1]).range([left_pad, w - pad]),
     y = d3.scale.linear().domain([-1, 1]).range([pad, h - pad * 2]);
     
+var colorScale = d3.scale.linear()
+  .domain([-1, 0, 1])
+  .range(["#FFFFDD", "#3E9583", "#1F2D86"]);
+
 d3.select(window).on('resize', resize); 
 
 function resize() {
@@ -127,10 +133,94 @@ function(message) {
 }
 )
 
+Shiny.addCustomMessageHandler("colZ", function(message){
+  // this is based on http://bl.ocks.org/nbremer/62cf60e116ae821c06602793d265eaf6
+  colorScale
+  	.domain([message.cMin, message.cMed, message.cMax])
+  	.range(["#FFFFDD", "#3E9583", "#1F2D86"]);
+  	
+  var countScale = d3.scale.linear()
+	.domain([message.cMin, message.cMax])
+	.range([0, width])
+	
+	//Calculate the variables for the temp gradient
+  var numStops = 10;
+  countRange = countScale.domain();
+  countRange[2] = countRange[1] - countRange[0];
+  countPoint = [];
+  for(var i = 0; i < numStops; i++) {
+	  countPoint.push(i * countRange[2]/(numStops-1) + countRange[0]);
+  }//for i
+
+  //Create the gradient
+  svg.append("defs")
+	  .append("linearGradient")
+  	.attr("id", "legend-traffic")
+	  .attr("x1", "0%").attr("y1", "0%")
+  	.attr("x2", "100%").attr("y2", "0%")
+  	.selectAll("stop") 
+  	.data(d3.range(numStops))                
+  	.enter().append("stop") 
+  	.attr("offset", function(d,i) { 
+	  	return countScale( countPoint[i] )/width;
+  	})   
+	  .attr("stop-color", function(d,i) { 
+	  	return colorScale( countPoint[i] ); 
+  	});
+  	
+  var legendWidth = Math.min(width*0.8, 400);
+  //Color Legend container
+  var legendsvg = svg.append("g")
+	  .attr("class", "legendWrapper")
+	  .attr("transform", "translate(" + (width/2) + "," + (h-50) + ")");
+
+  //Draw the Rectangle
+  legendsvg.append("rect")
+  	.attr("class", "legendRect")
+  	.attr("x", -legendWidth/2)
+  	.attr("y", 0)
+  	//.attr("rx", hexRadius*1.25/2)
+  	.attr("width", legendWidth)
+  	.attr("height", 10)
+  	.style("fill", "url(#legend-traffic)");
+	
+  //Append title
+  legendsvg.append("text")
+  	.attr("class", "legendTitle")
+  	.attr("x", 0)
+  	.attr("y", -10)
+  	.style("text-anchor", "middle")
+  	.text("Testname");
+
+  //Set scale for x-axis
+  var xScale = d3.scale.linear()
+  	 .range([-legendWidth/2, legendWidth/2])
+  	 .domain([ message.min, message.max] );
+ 
+  //Define x-axis
+  var xAxis = d3.svg.axis()
+	    .orient("bottom")
+	    .ticks(5)
+	    //.tickFormat(formatPercent)
+	    .scale(xScale);
+
+  //Set up X axis
+  legendsvg.append("g")
+	  .attr("class", "axis")
+	  .attr("transform", "translate(0," + (10) + ")")
+	  .call(xAxis);
+})
+
 
 Shiny.addCustomMessageHandler("cube",
   function(message) {
     showCube = Number(message[0]);
+  }
+)
+
+Shiny.addCustomMessageHandler("colZon",
+  function(message) {
+    colZon = Number(message[0]);
   }
 )
 
@@ -176,8 +266,12 @@ Shiny.addCustomMessageHandler("data",
              .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; })
              .attr("d", d3.svg.symbol().type("cross").size(5*5))
             .attr("r", 2)
-            .attr("fill", function(d) {
-              return colourmap[d.c]
+            .style("fill", function(d) {
+              if (colZon===0) {return colourmap[d.c];}
+              else {
+                document.getElementById('info').innerHTML = "message"
+                document.getElementById('info').innerHTML = colorScale()
+                return colorScale(d.c);}
             })
             .append("svg:title")
             .text(function(d) {return d.pL})

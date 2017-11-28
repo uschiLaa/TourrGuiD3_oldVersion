@@ -92,9 +92,21 @@ shinyServer(function(input, output, session) {
     session$sendCustomMessage("metadata",toJSON(rv$showMeta))
     },ignoreInit = TRUE, priority = 5, ignoreNULL = FALSE)
   
+  observeEvent(c(input$colZ, input$class),{
+    if(is.na(input$colZ) | !input$colZ){
+      session$sendCustomMessage("colZon",toJSON(0))
+      return()
+    }
+    session$sendCustomMessage("colZon",toJSON(1))
+    colMax <- max(filter(rv$d,cat=="data")[input$class])
+    colMin <- min(filter(rv$d,cat=="data")[input$class])
+    colMed <- colMax - (colMax-colMin)/2
+    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cMed=toJSON(colMed)))
+  },ignoreInit = TRUE)
+  
   # need to reset tour when one of these input parameters is changed
   # FIXME need function that simply redraws last picture but with updated parameters, e.g. adding/removing cube, point labels
-  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$cutData, input$rescale, input$showCube, input$metadata),
+  observeEvent(c(input$type, input$variables, input$guidedIndex, input$class, input$scagType, input$point_label, input$cMax, input$cutData, input$rescale, input$showCube, input$metadata, input$colZ),
                {
 
                  session$sendCustomMessage("debug", paste("Changed tour type to ", input$type)) #FIXME what should be messages shown here?
@@ -124,10 +136,13 @@ shinyServer(function(input, output, session) {
                    }
                    
                    updateSliderInput(session, "cutData", min=minC, max=maxC, value=c(c1,c2), step=stepC)
-                   rv$dSelected <- filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)"))
+                   rv$dSelected <- arrange_(filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)")), input$class)
                    
                    #create vector of Larger and Smaller class assignment
-                   rv$class <- unname(ifelse(filter(rv$dSelected,cat=="data")[input$class] > input$cMax, "Larger", "Smaller"))
+                   rv$class <- unname(ifelse(arrange_(filter(rv$dSelected,cat=="data"),input$class)[input$class] > input$cMax, "Larger", "Smaller"))
+                   if(input$colZ){
+                     rv$class <- unname(arrange_(filter(rv$dSelected,cat=="data"),input$class)[input$class])
+                   }
                    rv$cl <- rv$class[,1]
                  }
                  else{
