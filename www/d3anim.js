@@ -136,8 +136,8 @@ function(message) {
 Shiny.addCustomMessageHandler("colZ", function(message){
   // this is based on http://bl.ocks.org/nbremer/62cf60e116ae821c06602793d265eaf6
   colorScale
-  	.domain([message.cMin, message.cMed, message.cMax])
-  	.range(["#FFFFDD", "#3E9583", "#1F2D86"]);
+  	.domain(d3.range(message.cMin, message.cMax, message.cDiff / (8)))
+  	.range(["#2c7bb6", "#00a6ca","#00ccbc","#90eb9d","#ffff8c","#f9d057","#f29e2e","#e76818","#d7191c"]);
   	
   var countScale = d3.scale.linear()
 	.domain([message.cMin, message.cMax])

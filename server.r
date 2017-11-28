@@ -100,8 +100,8 @@ shinyServer(function(input, output, session) {
     session$sendCustomMessage("colZon",toJSON(1))
     colMax <- max(filter(rv$d,cat=="data")[input$class])
     colMin <- min(filter(rv$d,cat=="data")[input$class])
-    colMed <- colMax - (colMax-colMin)/2
-    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cMed=toJSON(colMed)))
+    colDiff <- colMax-colMin
+    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cDiff=toJSON(colDiff)))
   },ignoreInit = TRUE)
   
   # need to reset tour when one of these input parameters is changed
@@ -136,12 +136,12 @@ shinyServer(function(input, output, session) {
                    }
                    
                    updateSliderInput(session, "cutData", min=minC, max=maxC, value=c(c1,c2), step=stepC)
-                   rv$dSelected <- arrange_(filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)")), input$class)
+                   rv$dSelected <- arrange_(filter_(rv$d, paste("cat != 'data' | (", input$class, ">= c1 &", input$class,"<= c2)")), paste("desc(", input$class, ")"))
                    
                    #create vector of Larger and Smaller class assignment
-                   rv$class <- unname(ifelse(arrange_(filter(rv$dSelected,cat=="data"),input$class)[input$class] > input$cMax, "Larger", "Smaller"))
+                   rv$class <- unname(ifelse(arrange_(filter(rv$dSelected,cat=="data"),paste("desc(", input$class, ")"))[input$class] > input$cMax, "Larger", "Smaller"))
                    if(input$colZ){
-                     rv$class <- unname(arrange_(filter(rv$dSelected,cat=="data"),input$class)[input$class])
+                     rv$class <- unname(arrange_(filter(rv$dSelected,cat=="data"),paste("desc(", input$class, ")"))[input$class])
                    }
                    rv$cl <- rv$class[,1]
                  }

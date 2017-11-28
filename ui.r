@@ -84,11 +84,11 @@ shinyUI(fluidPage(
       conditionalPanel(condition = "output.numC", checkboxInput("colZ", "colZ", value = FALSE)),
       
       # if class is numerical we group the points by selecting a threshold value that can be selected from a slider
-      conditionalPanel( condition = "output.numC",
+      conditionalPanel( condition = "output.numC && !input.colZ",
                         sliderInput("cMax",label = "Threshold value", min=0, max =1, value= 0.5, step = 0.1)),
 
       # add also numeric input of threshold value for selection of exact value, this will update also the slider
-      conditionalPanel(condition = "output.numC", numericInput("numCmax", label = "Select exact threshold value", value=0.5)),
+      conditionalPanel(condition = "output.numC && !input.colZ", numericInput("numCmax", label = "Select exact threshold value", value=0.5)),
       
       conditionalPanel( condition = "output.numC",
                         sliderInput("cutData",label = "Select data range", min=0, max =1, value= c(0,1)))
