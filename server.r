@@ -101,7 +101,7 @@ shinyServer(function(input, output, session) {
     colMax <- max(filter(rv$d,cat=="data")[input$class])
     colMin <- min(filter(rv$d,cat=="data")[input$class])
     colDiff <- colMax-colMin
-    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cDiff=toJSON(colDiff)))
+    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cDiff=toJSON(colDiff), n=toJSON(input$class)))
   },ignoreInit = TRUE)
   
   # need to reset tour when one of these input parameters is changed
@@ -180,7 +180,7 @@ shinyServer(function(input, output, session) {
                  }
 
                  # pass requested color assignment to d3
-                 session$sendCustomMessage("newcolours", myColV)
+                 if (!input$colZ) {session$sendCustomMessage("newcolours", myColV)}
                  
                  # now we can initialise the tour
                  rv$tour <-

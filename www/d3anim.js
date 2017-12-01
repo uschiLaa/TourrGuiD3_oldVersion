@@ -135,6 +135,9 @@ function(message) {
 
 Shiny.addCustomMessageHandler("colZ", function(message){
   // this is based on http://bl.ocks.org/nbremer/62cf60e116ae821c06602793d265eaf6
+  
+  svg.selectAll(".legend").remove();
+  
   colorScale
   	.domain(d3.range(message.cMin, message.cMax, message.cDiff / (8)))
   	.range(["#2c7bb6", "#00a6ca","#00ccbc","#90eb9d","#ffff8c","#f9d057","#f29e2e","#e76818","#d7191c"]);
@@ -190,7 +193,7 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   	.attr("x", 0)
   	.attr("y", -10)
   	.style("text-anchor", "middle")
-  	.text("Testname");
+  	.text(message.n);
 
   //Set scale for x-axis
   var xScale = d3.scale.linear()
@@ -198,7 +201,7 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   	 .domain([ message.min, message.max] );
  
   //Define x-axis
-  var xAxis = d3.svg.axis()
+  var legxAxis = d3.svg.axis()
 	    .orient("bottom")
 	    .ticks(5)
 	    //.tickFormat(formatPercent)
@@ -208,7 +211,7 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   legendsvg.append("g")
 	  .attr("class", "axis")
 	  .attr("transform", "translate(0," + (10) + ")")
-	  .call(xAxis);
+	  .call(legxAxis);
 })
 
 
@@ -269,8 +272,6 @@ Shiny.addCustomMessageHandler("data",
             .style("fill", function(d) {
               if (colZon===0) {return colourmap[d.c];}
               else {
-                document.getElementById('info').innerHTML = "message"
-                document.getElementById('info').innerHTML = colorScale()
                 return colorScale(d.c);}
             })
             .append("svg:title")
