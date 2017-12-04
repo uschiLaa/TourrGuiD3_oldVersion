@@ -21,7 +21,7 @@ shinyUI(fluidPage(
         selectInput(
           "guidedIndex",
           "Index function",
-          c("Holes", "Centre Mass", "LDA", "PDA", "Scagnostics")
+          c("Holes", "Centre Mass", "LDA", "PDA", "Scagnostics","6dBestFit")
           ,
           selected = "LDA"
         )

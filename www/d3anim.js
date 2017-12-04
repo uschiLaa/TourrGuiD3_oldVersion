@@ -141,8 +141,10 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   svg.selectAll(".legend").remove();
   
   colorScale
-  	.domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
-  	.range(['#081d58', '#253494', '#225ea8', '#1d91c0', '#41b6c4', '#7fcdbb', '#c7e9b4', '#edf8b1', '#ffffd9']);
+    .domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
+    .range(['#800026', '#bd0026', '#e31a1c', '#fc4e2a', '#fd8d3c', '#feb24c', '#fed976', '#ffeda0', '#ffffcc'])
+  	//.domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
+  	//.range(['#081d58', '#253494', '#225ea8', '#1d91c0', '#41b6c4', '#7fcdbb', '#c7e9b4', '#edf8b1', '#ffffd9']);
   	
   var countScale = d3.scale.linear()
 	.domain([message.cMin, message.cMax])
@@ -249,10 +251,11 @@ Shiny.addCustomMessageHandler("data",
           .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; })
           .attr("d", d3.svg.symbol().type( function(d) {
             return mySymbols[d.i]; })
-            .size(5*5))
+            .size(7*7))
           .attr("r",2)
-          .style("fill", function(d) {
-              return colourmap[d.c];})
+          .style("fill","black")
+          //.style("fill", function(d) {
+          //    return colourmap[d.c];})
 
 }
         

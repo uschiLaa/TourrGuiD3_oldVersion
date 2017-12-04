@@ -2,7 +2,8 @@ choose_tour <- function(type,
                         lastProj,
                         subtype = "",
                         group_variable = "",
-                        scagTypeIndex
+                        scagTypeIndex,
+                        idx
 )
   
 {
@@ -34,7 +35,10 @@ choose_tour <- function(type,
       tourType <- guided_tour(lda_pp(group_variable))
     } else if (subtype == "PDA") {
       tourType <- guided_tour(pda_pp(group_variable))
-    } else {
+    } else if (subtype == "6dBestFit"){
+      tourType <- guided_tour(fitComp(idx))
+    }
+    else {
       scagsList <- c("Outlying","Skewed","Clumpy","Sparse","Striated","Convex","Skinny","Stringy","Monotonic")
       scagsIndex <- match(scagTypeIndex,scagsList)
       tourType <- guided_tour(scags(group_variable, scagsIndex))
@@ -56,6 +60,21 @@ holes_ <- function() {
     val <- num / den
     return(val)
   }
+}
+
+fitComp <- function(idx) {
+  #calculate the distance between the mean point and the best fit point in the current projection
+  function(mat){
+    mat_ <- cbind.data.frame(mat, class=idx)
+    xmean <- colMeans(unname(subset(mat_, class == "68")[1]))
+    ymean <- colMeans(unname(subset(mat_, class == "68")[2]))
+    x6 <- subset(mat_, class=="6dBestFit")[1,1]
+    y6 <- subset(mat_, class=="6dBestFit")[1,2]
+    #print(c(xmean,ymean,x6,y6,sqrt((xmean-x6)*(xmean-x6)+(ymean-y6)*(ymean-y6))))
+    
+    return(1-sqrt((xmean-x6)*(xmean-x6)+(ymean-y6)*(ymean-y6)))
+  }
+  
 }
 
 scags <- function(cl,scagMetricIndex) {

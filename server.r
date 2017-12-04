@@ -1,5 +1,6 @@
 shinyServer(function(input, output, session) {
-  fps <- 33 #frames per second is fixed here
+  #fps <- 33 #frames per second is fixed here
+  fps <- 15
   aps <- 5 #default for step size (as angle per second), can be updated via ui
   
   rv <- reactiveValues()
@@ -14,9 +15,10 @@ shinyServer(function(input, output, session) {
                 b <- matrix(runif(2*p), p, 2) # select projection matrix entries from uniform distribution
                 
                
-                rv$tour <- new_tour(as.matrix(filter(rv$dSelected,cat=="data")[input$variables]),
-                                  choose_tour(input$type, b, input$guidedIndex, c(rv$cl), input$scagType),
-                                 b)
+                #rv$tour <- new_tour(as.matrix(filter(rv$dSelected,cat=="data")[input$variables]),
+                #                  choose_tour(input$type, b, input$guidedIndex, c(rv$cl), input$scagType),
+                rv$tour <- new_tour(rv$matP,choose_tour(input$type, b, input$guidedIndex, c(rv$cl), input$scagType, rv$idx),
+                                                 b)
                },priority = 3)
   
   #update step size (i.e. aps) given new ui input
@@ -160,7 +162,7 @@ shinyServer(function(input, output, session) {
                  }
                  else{rv$dScaled[rv$nums] <- center(rv$dScaled[rv$nums])}
                    #use rescaled data to extract matrices based on requested input variables
-                     rv$mat <- as.matrix(filter(rv$dScaled,cat=="data")[input$variables])
+                     rv$mat <- as.matrix(filter(rv$dScaled,cat %in% c("data"))[input$variables])
                      if(rv$showCube==1){
                        rv$a <- as.matrix(filter(rv$dScaled,cat=="cubeLow")[input$variables])
                        rv$b <- as.matrix(filter(rv$dScaled,cat=="cubeUp")[input$variables])
@@ -182,9 +184,19 @@ shinyServer(function(input, output, session) {
                  # pass requested color assignment to d3
                  if (!input$colZ) {session$sendCustomMessage("newcolours", myColV)}
                  
+                 if (input$guidedIndex=="6dBestFit") {
+                   rv$matP <- rbind(rv$mat,as.matrix(filter(rv$dScaled, cat=="6dBestFit")[input$variables]))
+                   rv$idx <- unname(filter(rv$d,cat=="data")["pValue"])[[1]]
+                   rv$idx[length(rv$idx)+1] = "6dBestFit"
+                 }
+                 else{
+                   rv$matP <- rv$mat
+                   rv$idx <- NA
+                 }
+                 
                  # now we can initialise the tour
                  rv$tour <-
-                   new_tour(rv$mat,choose_tour(input$type, rv$currentProj, input$guidedIndex, rv$cl, input$scagType),
+                   new_tour(rv$matP,choose_tour(input$type, rv$currentProj, input$guidedIndex, rv$cl, input$scagType, rv$idx),
                             NULL)
                  
                  # make parallel coordinate plot of data points, showing the selected variables and grouping by selected grouping class
