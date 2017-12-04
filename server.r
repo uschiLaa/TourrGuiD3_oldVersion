@@ -200,21 +200,21 @@ shinyServer(function(input, output, session) {
     
     step <- rv$tour(rv$aps / fps)
     
+    
     if (!is.null(step)) {
       invalidateLater(1000 / fps) #selecting frequency of re-executing this observe function
       rv$currentProj <- step$proj
-      #FIXME do i need to call center function? it should be done for everything simultaneously?
       j <- rv$mat %*% step$proj
       j <- cbind(j, class = rv$class)
       colnames(j) <- NULL
 
       if(!is.null(input$metadata)){
         jMeta <- rv$metadata %*% step$proj
-        jMeta <- cbind(jMeta, class = rv$meta)
+        jMeta <- cbind(jMeta, class = rv$meta, symbIdx = match(unlist(rv$meta),unlist(unique(rv$meta)))-1)
         colnames(jMeta) <- NULL
       }
       else{
-        jMeta <- matrix(c(0,0,0,0,0,0),ncol=3)
+        jMeta <- matrix(c(0,0,0,0,0,0,0,0),ncol=4)
       }
 
       
@@ -229,11 +229,9 @@ shinyServer(function(input, output, session) {
         colnames(cubeB) <- NULL
       }
       
-    
-      
       session$sendCustomMessage(type = "data", message = list(d = toJSON(data_frame(pL=rv$pLabel[,1],x=j[,2],y=j[,1],c=j[,3])),
                                                               a = toJSON(data_frame(n=input$variables,y=step$proj[,1],x=step$proj[,2])),
-                                                              m = toJSON(data_frame(x=jMeta[,2],y=jMeta[,1],c=jMeta[,3])),
+                                                              m = toJSON(data_frame(x=jMeta[,2],y=jMeta[,1],c=jMeta[,3],i=jMeta[,4])),
                                                               cube = toJSON(data_frame(ax = cubeA[,2], ay = cubeA[,1], bx=cubeB[,2],by=cubeB[,1]))))
     }
     

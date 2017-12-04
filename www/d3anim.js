@@ -57,6 +57,8 @@ var xAxis = d3.svg.axis().scale(x).orient("bottom")
 var yAxis = d3.svg.axis().scale(y).orient("left")
     .ticks(10);
 
+var mySymbols = ["diamond","square","triangle-down", "triangle-up"];
+
 svg.append("g")
     .attr("class", "axis")
     .attr("transform", "translate(0, " + (h - pad) + ")")
@@ -139,8 +141,8 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   svg.selectAll(".legend").remove();
   
   colorScale
-  	.domain(d3.range(message.cMin, message.cMax, message.cDiff / (8)))
-  	.range(["#2c7bb6", "#00a6ca","#00ccbc","#90eb9d","#ffff8c","#f9d057","#f29e2e","#e76818","#d7191c"]);
+  	.domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
+  	.range(['#081d58', '#253494', '#225ea8', '#1d91c0', '#41b6c4', '#7fcdbb', '#c7e9b4', '#edf8b1', '#ffffd9']);
   	
   var countScale = d3.scale.linear()
 	.domain([message.cMin, message.cMax])
@@ -238,37 +240,33 @@ Shiny.addCustomMessageHandler("data",
         
 
         
-        svg.select(".loading").remove();
-        
         draw_metadata = function(message) {
         
-          svg.selectAll("circle")
+          svg.selectAll(".path2")
           .data(message.m)
-          .enter()
-          .append("circle")
-          .attr("class", "circle")
-          .attr("cx", function(d) {
-                return x(d.x);
-            })
-           .attr("cy", function(d) {
-               return y(d.y);
-            })
-          .attr("r", 4)
-          .style('fill-opacity', 0.5)
+          .enter().append("path")
+          .attr("class", "path2")
+          .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; })
+          .attr("d", d3.svg.symbol().type( function(d) {
+            return mySymbols[d.i]; })
+            .size(5*5))
+          .attr("r",2)
           .style("fill", function(d) {
               return colourmap[d.c];})
+
 }
         
 
         draw_scatterplot = function(message) {
         
           
-        svg.selectAll("path")
+        svg.selectAll(".path1")
              .data(message.d)
              .enter().append("path")
+             .attr("class","path1")
              .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; })
-             .attr("d", d3.svg.symbol().type("cross").size(5*5))
-            .attr("r", 2)
+             .attr("d", d3.svg.symbol().type("circle").size(5*5))
+             .attr("r", 2)
             .style("fill", function(d) {
               if (colZon===0) {return colourmap[d.c];}
               else {
@@ -323,20 +321,20 @@ Shiny.addCustomMessageHandler("data",
         
         
         if (initialised === 0) {
+           svg.select(".loading").remove();
            draw_scatterplot(message);
-           //draw_contourplot(message);
         } else  {
           
           // document.getElementById('d3_output').innerHTML = duration; //"trying to transition";
 
-          svg.selectAll("path").remove();
-          svg.selectAll("circle").remove();
+          svg.selectAll(".path1").remove();
+          svg.selectAll(".path2").remove();
           svg.selectAll(".point").remove();
           svg.selectAll(".line1").remove();
           svg.selectAll(".text1").remove();
           svg.selectAll(".line2").remove();
-          if (showMeta == 1) {draw_metadata(message);}
           draw_scatterplot(message);
+          if (showMeta == 1) {draw_metadata(message);}
           if (showCube == 1){draw_cube(message);}
           
         }
