@@ -91,7 +91,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$metadata,{
     if(is.null(input$metadata)){rv$showMeta = 0}
     else{rv$showMeta = 1}
-    session$sendCustomMessage("metadata",toJSON(rv$showMeta))
+    session$sendCustomMessage("metadata",message = list(s=toJSON(rv$showMeta),l=toJSON(data_frame(n=input$metadata,i=seq(length(input$metadata))))))
     },ignoreInit = TRUE, priority = 5, ignoreNULL = FALSE)
   
   observeEvent(c(input$colZ, input$class),{
@@ -103,7 +103,8 @@ shinyServer(function(input, output, session) {
     colMax <- max(filter(rv$d,cat=="data")[input$class])
     colMin <- min(filter(rv$d,cat=="data")[input$class])
     colDiff <- colMax-colMin
-    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cDiff=toJSON(colDiff), n=toJSON(input$class)))
+    labelAt <- seq(colMin,colMax,colDiff/5)
+    session$sendCustomMessage("colZ",message = list(cMin=toJSON(colMin),cMax=toJSON(colMax),cDiff=toJSON(colDiff), n=toJSON(input$class),l=toJSON(labelAt)))
   },ignoreInit = TRUE)
   
   # need to reset tour when one of these input parameters is changed
@@ -178,12 +179,8 @@ shinyServer(function(input, output, session) {
                    rv$metadata <- as.matrix(filter(rv$dScaled, cat %in% input$metadata)[input$variables])
                    rv$meta <- unname(filter(rv$d, cat %in% input$metadata)["cat"])
                    clMeta <- rv$meta[[1]]
-                   myColV <- c(unique(clMeta), unique(rv$cl))
                  }
 
-                 # pass requested color assignment to d3
-                 if (!input$colZ) {session$sendCustomMessage("newcolours", myColV)}
-                 
                  if (input$guidedIndex=="6dBestFit") {
                    rv$matP <- rbind(rv$mat,as.matrix(filter(rv$dScaled, cat=="6dBestFit")[input$variables]))
                    rv$idx <- unname(filter(rv$d,cat=="data")["pValue"])[[1]]
@@ -193,6 +190,9 @@ shinyServer(function(input, output, session) {
                    rv$matP <- rv$mat
                    rv$idx <- NA
                  }
+                 
+                 # pass requested color assignment to d3
+                 if (!input$colZ) {session$sendCustomMessage("newcolours", myColV)}
                  
                  # now we can initialise the tour
                  rv$tour <-

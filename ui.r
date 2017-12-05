@@ -112,7 +112,6 @@ shinyUI(fluidPage(
     ),
     
     # draw d3 output here
-    # FIXME how to get dynamically updated size of the plot?
     # tags$script calls to include d3 dependencies, tags$div adds d3 output to the page (check if all of them are needed?)
     column(6,
            fluidRow(column(12,

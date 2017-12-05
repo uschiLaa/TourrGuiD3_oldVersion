@@ -94,13 +94,13 @@ Shiny.addCustomMessageHandler("debug",
 Shiny.addCustomMessageHandler("newcolours",
 function(message) {
   
-  svg.selectAll(".legend").remove();
+  svg.selectAll(".legend1").remove();
 
   draw_legend = function(message) {
-          var legend = svg.selectAll(".legend")
+          var legend = svg.selectAll(".legend1")
       .data(message)
     .enter().append("g")
-      .attr("class", "legend")
+      .attr("class", "legend1")
       .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
       
        // draw legend colored rectangles
@@ -138,11 +138,13 @@ function(message) {
 Shiny.addCustomMessageHandler("colZ", function(message){
   // this is based on http://bl.ocks.org/nbremer/62cf60e116ae821c06602793d265eaf6
   
-  svg.selectAll(".legend").remove();
+  svg.selectAll(".legend1").remove();
+  svg.selectAll(".legendWrapper").remove();
   
   colorScale
-    .domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
-    .range(['#800026', '#bd0026', '#e31a1c', '#fc4e2a', '#fd8d3c', '#feb24c', '#fed976', '#ffeda0', '#ffffcc'])
+    .domain(d3.range(message.cMin, message.cMax, message.cDiff / (6)))
+    .range(['#88419d', '#8c6bb1', '#8c96c6', '#9ebcda', '#bfd3e6', "#fec44f"])
+    //.range(['#800026', '#bd0026', '#e31a1c', '#fc4e2a', '#fd8d3c', '#feb24c', '#fed976', '#ffeda0', '#ffffcc'])
   	//.domain(d3.range(message.cMin, message.cMax, message.cDiff / (9)))
   	//.range(['#081d58', '#253494', '#225ea8', '#1d91c0', '#41b6c4', '#7fcdbb', '#c7e9b4', '#edf8b1', '#ffffd9']);
   	
@@ -202,19 +204,35 @@ Shiny.addCustomMessageHandler("colZ", function(message){
   //Set scale for x-axis
   var xScale = d3.scale.linear()
   	 .range([-legendWidth/2, legendWidth/2])
-  	 .domain([ message.min, message.max] );
+  	 //.domain([68,100]);
+  	 .domain([ message.cMin, message.cMax] );
+  	 
+  	// document.getElementById('d3_output').innerHTML = xScale(90);
+ 
+   legendsvg.selectAll(".tagText")
+     .data(message.l)
+     .enter().append("text")
+  	 .attr("class", ".tagText")
+  	  .attr("x", function(d){return xScale(d);})
+    	 .attr("y", 25)
+  	  .style("text-anchor", "middle")
+    	.text(function(d){return String(d);});
  
   //Define x-axis
   var legxAxis = d3.svg.axis()
 	    .orient("bottom")
-	    .ticks(5)
+	    //.ticks(3)
+	    //.tickSize(6)
 	    //.tickFormat(formatPercent)
 	    .scale(xScale);
+	    
 
   //Set up X axis
   legendsvg.append("g")
-	  .attr("class", "axis")
-	  .attr("transform", "translate(0," + (10) + ")")
+	  //.attr("class", "axis")
+	  //.attr("x",0)
+	  //.attr("y", -10)
+	  //.attr("transform", "translate(" + (-legendWidth/2) + "," + 0 + ")")
 	  .call(legxAxis);
 })
 
@@ -233,7 +251,39 @@ Shiny.addCustomMessageHandler("colZon",
 
 Shiny.addCustomMessageHandler("metadata",
   function(message) {
-    showMeta = Number(message[0]);
+    svg.selectAll(".legend2").remove();
+    showMeta = Number(message.s[0]);
+    if(showMeta==1){
+      //from https://stackoverflow.com/questions/42653634/how-can-i-use-symbols-with-a-legend
+      var legendMeta = svg.append('g')
+    .attr("class", "legend2")
+    .attr("height", 0)
+    .attr("width", 0)
+    .attr('transform', 'translate(20,20)');
+
+  var legendRect = legendMeta
+    .selectAll('g')
+    .data(message.l);
+
+  var legendRectE = legendRect.enter()
+    .append("g")
+    .attr("transform", function(d,i){
+      return 'translate(0, ' + (i * 20) + ')';
+    });
+    
+  legendRectE
+      .append('path')
+      .attr("d", d3.svg.symbol().type((d) => { return mySymbols[d.i-1] })) 
+        .style("fill", "black");
+
+  legendRectE
+    .append("text")
+    .attr("x", 10)
+    .attr("y", 5)
+    .text(function (d) {
+        return d.n;
+    });
+    }
   }
 )
 

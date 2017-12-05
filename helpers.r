@@ -72,7 +72,7 @@ fitComp <- function(idx) {
     y6 <- subset(mat_, class=="6dBestFit")[1,2]
     #print(c(xmean,ymean,x6,y6,sqrt((xmean-x6)*(xmean-x6)+(ymean-y6)*(ymean-y6))))
     
-    return(1-sqrt((xmean-x6)*(xmean-x6)+(ymean-y6)*(ymean-y6)))
+    return(sqrt((xmean-x6)*(xmean-x6)+(ymean-y6)*(ymean-y6)))
   }
   
 }
