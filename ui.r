@@ -81,6 +81,8 @@ shinyUI(fluidPage(
       # class can be either numerical or categorical variable
       selectInput("class", choices = vector('character'), label = "Select class variable to colour the points"),
       
+      conditionalPanel(condition = "output.numC", checkboxInput("invert", "invert", value = FALSE)),
+      
       conditionalPanel(condition = "output.numC", checkboxInput("colZ", "colZ", value = FALSE)),
       
       # if class is numerical we group the points by selecting a threshold value that can be selected from a slider

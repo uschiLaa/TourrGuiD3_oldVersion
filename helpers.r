@@ -89,13 +89,14 @@ scags <- function(cl,scagMetricIndex) {
   
   function(mat) {
     mat_ <- cbind.data.frame(mat, class = cl)
-    scagResults = c(scagnostics(subset(mat_, class == unique(cl)[1])[1:2])[scagMetricIndex],
-                    scagnostics(subset(mat_, class == unique(cl)[2])[1:2])[scagMetricIndex]
-                    
-    )
+    #scagResults = c(scagnostics(subset(mat_, class == unique(cl)[1])[1:2])[scagMetricIndex],
+    #                scagnostics(subset(mat_, class == unique(cl)[2])[1:2])[scagMetricIndex]
+    #                
+    #)
     
+    return (scagnostics(subset(mat_, class == unique(cl)[1])[1:2])[scagMetricIndex])
     
-    return(abs(scagResults[1] - scagResults[2]))
+    #return(abs(scagResults[1] - scagResults[2]))
     
   }
 }
